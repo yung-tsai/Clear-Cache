@@ -18,7 +18,10 @@ export function useDraggable({ onDrag, onDragStart, onDragEnd }: UseDraggableOpt
   });
 
   const handleMouseDown = useCallback((e: MouseEvent) => {
-    if (!ref.current || e.target !== ref.current.querySelector('.mac-window-title-bar')) return;
+    if (!ref.current) return;
+    
+    const titleBar = ref.current.querySelector('.mac-window-title-bar');
+    if (!titleBar || !titleBar.contains(e.target as Node)) return;
     
     e.preventDefault();
     setIsDragging(true);
@@ -63,18 +66,13 @@ export function useDraggable({ onDrag, onDragStart, onDragEnd }: UseDraggableOpt
 
   // Attach event listeners
   const attachListeners = useCallback((element: HTMLDivElement) => {
-    const titleBar = element.querySelector('.mac-window-title-bar');
-    if (titleBar) {
-      titleBar.addEventListener('mousedown', handleMouseDown as EventListener);
-    }
+    element.addEventListener('mousedown', handleMouseDown as EventListener);
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
     
     return () => {
-      if (titleBar) {
-        titleBar.removeEventListener('mousedown', handleMouseDown as EventListener);
-      }
+      element.removeEventListener('mousedown', handleMouseDown as EventListener);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -83,13 +81,10 @@ export function useDraggable({ onDrag, onDragStart, onDragEnd }: UseDraggableOpt
   const setRef = useCallback((element: HTMLDivElement | null) => {
     if (ref.current) {
       // Clean up previous listeners
-      const titleBar = ref.current.querySelector('.mac-window-title-bar');
-      if (titleBar) {
-        titleBar.removeEventListener('mousedown', handleMouseDown as EventListener);
-      }
+      ref.current.removeEventListener('mousedown', handleMouseDown as EventListener);
     }
     
-    ref.current = element;
+    (ref as any).current = element;
     
     if (element) {
       attachListeners(element);

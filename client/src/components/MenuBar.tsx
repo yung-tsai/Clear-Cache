@@ -77,7 +77,8 @@ export default function MenuBar({
         onClick={onToggleSound}
         data-testid="button-toggle-sound"
       >
-        {soundEnabled ? '🔊' : '🔇'}
+        <span>{soundEnabled ? '🔊' : '🔇'}</span>
+        <span>Sound {soundEnabled ? 'ON' : 'OFF'}</span>
       </div>
     </div>
   );

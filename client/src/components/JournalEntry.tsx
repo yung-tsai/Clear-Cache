@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { JournalEntry as JournalEntryType, InsertJournalEntry } from "@shared/schema";
 import { useMacSounds } from "@/hooks/useMacSounds";
+import RichTextEditor from "@/components/RichTextEditor";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -16,7 +17,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
-  const contentRef = useRef<HTMLTextAreaElement>(null);
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
 
@@ -58,7 +58,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     if (entry) {
       setTitle(entry.title);
       setContent(entry.content);
-      setTags(entry.tags.join(', '));
+      setTags((entry.tags || []).join(', '));
     }
   }, [entry]);
 
@@ -79,17 +79,12 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
-  const handleKeyPress = () => {
-    playSound('type');
-  };
-
   const formatText = (command: string) => {
     playSound('click');
-    if (contentRef.current) {
-      const textarea = contentRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
       
       if (selectedText) {
         let formattedText = selectedText;
@@ -105,24 +100,21 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
             break;
         }
         
-        const newContent = content.substring(0, start) + formattedText + content.substring(end);
-        setContent(newContent);
+        document.execCommand('insertText', false, formattedText);
       }
     }
   };
 
   const highlightText = (color: string) => {
     playSound('click');
-    if (contentRef.current) {
-      const textarea = contentRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
+    const selection = window.getSelection();
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
       
       if (selectedText) {
         const highlightedText = `[highlight-${color}]${selectedText}[/highlight-${color}]`;
-        const newContent = content.substring(0, start) + highlightedText + content.substring(end);
-        setContent(newContent);
+        document.execCommand('insertText', false, highlightedText);
       }
     }
   };
@@ -215,13 +207,10 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         </div>
       )}
       
-      <textarea
-        ref={contentRef}
-        className="mac-textarea flex-1 min-h-[150px]"
+      <RichTextEditor
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={setContent}
         placeholder="Start writing your journal entry..."
-        onKeyPress={handleKeyPress}
         readOnly={readOnly}
         data-testid="textarea-content"
       />

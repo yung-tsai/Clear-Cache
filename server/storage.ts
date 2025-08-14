@@ -34,7 +34,8 @@ export class MemStorage implements IStorage {
       ...insertEntry, 
       id, 
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      tags: insertEntry.tags || []
     };
     this.entries.set(id, entry);
     return entry;
@@ -63,7 +64,7 @@ export class MemStorage implements IStorage {
       .filter(entry => 
         entry.title.toLowerCase().includes(lowerQuery) ||
         entry.content.toLowerCase().includes(lowerQuery) ||
-        entry.tags.some(tag => tag.toLowerCase().includes(lowerQuery))
+        (entry.tags || []).some(tag => tag.toLowerCase().includes(lowerQuery))
       )
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }

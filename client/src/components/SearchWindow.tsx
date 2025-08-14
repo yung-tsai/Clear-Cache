@@ -33,7 +33,7 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
   const filteredEntries = entries.filter(entry =>
     entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     entry.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    entry.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    (entry.tags || []).some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleDragStart = (e: React.DragEvent, entryId: string) => {
@@ -94,9 +94,9 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
                   <div className="text-xs mt-1">
                     {entry.content.substring(0, 100)}...
                   </div>
-                  {entry.tags.length > 0 && (
+                  {(entry.tags || []).length > 0 && (
                     <div className="text-xs mt-1">
-                      Tags: {entry.tags.join(', ')}
+                      Tags: {(entry.tags || []).join(', ')}
                     </div>
                   )}
                 </div>

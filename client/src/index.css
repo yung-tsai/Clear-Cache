@@ -361,9 +361,43 @@
 
 /* Sound Toggle */
 .sound-toggle {
-  position: absolute;
-  top: 2px;
-  right: 8px;
-  font-size: 8px;
+  margin-left: auto;
+  padding: 2px 8px;
+  font-size: 9px;
   cursor: pointer;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-gray);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sound-toggle:hover {
+  background: var(--mac-light-gray);
+}
+
+/* Rich Text Editor */
+.rich-text-editor {
+  background: var(--mac-white);
+  border: 1px solid var(--mac-black);
+  padding: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  resize: none;
+  outline: none;
+  min-height: 150px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.rich-text-editor .bold {
+  font-weight: bold;
+}
+
+.rich-text-editor .italic {
+  font-style: italic;
+}
+
+.rich-text-editor .underline {
+  text-decoration: underline;
 }
