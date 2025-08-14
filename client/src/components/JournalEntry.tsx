@@ -23,7 +23,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
@@ -95,11 +94,15 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   };
 
   // Voice-to-text functionality using Web Speech API
+  const recognitionRef = useRef<any>(null);
+  
   const toggleVoiceRecording = async () => {
     if (isRecording) {
       // Stop recording
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
       setIsRecording(false);
-      setIsTranscribing(true);
       playSound('click');
     } else {
       // Start recording with Web Speech API
@@ -120,8 +123,9 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = false; // Only get final results for faster processing
         recognition.lang = 'en-US';
+        recognitionRef.current = recognition;
         
         let finalTranscript = '';
         
@@ -130,15 +134,9 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         };
         
         recognition.onresult = (event: any) => {
-          let interimTranscript = '';
-          
           for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            
             if (event.results[i].isFinal) {
-              finalTranscript += transcript + ' ';
-            } else {
-              interimTranscript += transcript;
+              finalTranscript += event.results[i][0].transcript + ' ';
             }
           }
         };
@@ -147,7 +145,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           setIsRecording(false);
           
           if (finalTranscript.trim()) {
-            // Append the transcription to existing content
+            // Append the transcription to existing content immediately
             if (content.trim()) {
               setContent(content + '\n\n' + finalTranscript.trim());
             } else {
@@ -429,14 +427,12 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
               type="button"
               className={`mac-button voice-to-text-btn ${isRecording ? 'recording' : ''}`}
               onClick={toggleVoiceRecording}
-              disabled={isTranscribing}
+              disabled={false}
               data-testid="button-voice-to-text"
-              title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Record voice to text'}
+              title={isRecording ? 'Stop recording' : 'Record voice to text'}
             >
-              {isTranscribing ? (
-                <span className="transcribing-indicator">⏳</span>
-              ) : isRecording ? (
-                <MicOff className="w-4 h-4" />
+              {isRecording ? (
+                <MicOff className="w-4 h-4 text-white" />
               ) : (
                 <Mic className="w-4 h-4" />
               )}

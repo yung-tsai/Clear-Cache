@@ -1130,21 +1130,11 @@
 .voice-to-text-btn.recording {
   background: #ff4444 !important;
   border: 2px inset #cc3333 !important;
-  animation: recording-pulse 1s infinite;
-}
-
-.transcribing-indicator {
-  font-size: 14px;
-  animation: spin 1s linear infinite;
+  animation: recording-pulse 0.8s infinite;
 }
 
 @keyframes recording-pulse {
   0% { background: #ff4444; }
   50% { background: #ff6666; }
   100% { background: #ff4444; }
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
 }
