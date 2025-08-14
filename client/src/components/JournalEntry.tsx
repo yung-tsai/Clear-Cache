@@ -6,6 +6,7 @@ import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
+import VoiceRecorder from "@/components/VoiceRecorder";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -19,6 +20,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
+  const [voiceMemo, setVoiceMemo] = useState<string | null>(null);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
   const queryClient = useQueryClient();
@@ -64,6 +66,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setContent(entry.content);
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
+      setVoiceMemo(entry.voiceMemo || null);
       setJournalDate(entry.journalDate);
     } else {
       // For new entries, set today's date
@@ -90,6 +93,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       content,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       mood,
+      voiceMemo,
       journalDate
     };
 
@@ -194,6 +198,15 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         <MoodSelector 
           selectedMood={mood}
           onMoodChange={setMood}
+        />
+      </div>
+
+      {/* Voice Memo Section */}
+      <div className="mb-2">
+        <VoiceRecorder
+          existingRecording={voiceMemo}
+          onRecordingComplete={(audioData) => setVoiceMemo(audioData || null)}
+          disabled={readOnly}
         />
       </div>
       

@@ -499,3 +499,385 @@
 .rich-text-editor .underline {
   text-decoration: underline;
 }
+
+/* Voice Recorder Styles */
+.voice-recorder {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 8px;
+  margin: 4px 0;
+}
+
+.voice-recorder-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recording-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.voice-record-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  cursor: pointer;
+  font-size: 9px;
+}
+
+.voice-record-btn:hover {
+  background: var(--mac-light-gray);
+}
+
+.voice-record-btn.recording {
+  background: #ffcccc;
+  border-color: #ff6666;
+}
+
+.voice-icon {
+  font-size: 12px;
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 8px;
+  color: #666;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  background: #ff0000;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.3; }
+}
+
+.playback-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.sound-file-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.mac-sound-icon {
+  position: relative;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-waves {
+  position: absolute;
+  right: -10px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.wave {
+  width: 2px;
+  background: #000;
+  animation: wave 1.5s infinite ease-in-out;
+}
+
+.wave-1 {
+  height: 6px;
+  animation-delay: 0s;
+}
+
+.wave-2 {
+  height: 10px;
+  animation-delay: 0.3s;
+}
+
+.wave-3 {
+  height: 8px;
+  animation-delay: 0.6s;
+}
+
+@keyframes wave {
+  0%, 100% { height: 2px; }
+  50% { height: 12px; }
+}
+
+.sound-file-label {
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.playback-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.play-btn, .delete-btn {
+  padding: 4px 8px;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  cursor: pointer;
+  font-size: 10px;
+}
+
+.play-btn:hover, .delete-btn:hover {
+  background: var(--mac-light-gray);
+}
+
+/* Mood Trend Chart Styles */
+.mood-trend-chart {
+  padding: 16px;
+  background: var(--mac-white);
+  border: 1px inset #c0c0c0;
+}
+
+.chart-title {
+  font-size: 12px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #000;
+}
+
+.mood-chart-svg {
+  border: 1px solid #000;
+  background: var(--mac-white);
+  margin-bottom: 16px;
+}
+
+.chart-legend {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 8px;
+}
+
+.legend-title {
+  font-size: 9px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8px;
+}
+
+.legend-color {
+  width: 8px;
+  height: 8px;
+  border: 1px solid #000;
+}
+
+.no-data {
+  text-align: center;
+  font-size: 10px;
+  color: #666;
+  padding: 20px;
+}
+
+/* Mood Trends Window Styles */
+.mood-trends-window {
+  padding: 16px;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.window-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #ccc;
+}
+
+.window-header h2 {
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.close-btn {
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.close-btn:hover {
+  background: var(--mac-light-gray);
+}
+
+.trends-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mood-summary {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 12px;
+}
+
+.summary-title {
+  font-size: 10px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.summary-stats {
+  font-size: 9px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.loading-state {
+  text-align: center;
+  font-size: 10px;
+  color: #666;
+  padding: 20px;
+}
+
+/* Gratitude Prompts Styles */
+.gratitude-prompts {
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gratitude-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #000;
+}
+
+.gratitude-header h3 {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.gratitude-icon {
+  font-size: 18px;
+}
+
+.prompt-section {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prompt-label {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.prompt-text {
+  font-size: 11px;
+  background: var(--mac-white);
+  border: 1px inset #c0c0c0;
+  padding: 8px;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.new-prompt-btn {
+  align-self: flex-start;
+  padding: 4px 8px;
+  font-size: 8px;
+}
+
+.response-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.response-label {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.gratitude-textarea {
+  flex: 1;
+  min-height: 100px;
+  background: var(--mac-white);
+  border: 2px inset #c0c0c0;
+  padding: 8px;
+  font-family: Monaco, "Lucida Console", monospace;
+  font-size: 9px;
+  resize: none;
+}
+
+.gratitude-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ccc;
+}
+
+.save-btn, .cancel-btn {
+  padding: 6px 12px;
+  font-size: 9px;
+}
+
+.save-btn:disabled {
+  background: #ddd;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.gratitude-footer {
+  text-align: center;
+  padding-top: 8px;
+  border-top: 1px solid #ccc;
+}
+
+.gratitude-quote {
+  font-size: 8px;
+  font-style: italic;
+  color: #666;
+}

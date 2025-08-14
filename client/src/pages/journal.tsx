@@ -3,6 +3,8 @@ import MenuBar from "@/components/MenuBar";
 import MacWindow from "@/components/MacWindow";
 import JournalEntry from "@/components/JournalEntry";
 import SearchWindow from "@/components/SearchWindow";
+import GratitudePrompts from "@/components/GratitudePrompts";
+import MoodTrendsWindow from "@/components/MoodTrendsWindow";
 import DesktopWeatherWidget from "@/components/DesktopWeatherWidget";
 import TrashIcon from "@/components/TrashIcon";
 import { useMacSounds } from "@/hooks/useMacSounds";
@@ -11,7 +13,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 export default function Journal() {
   const [windows, setWindows] = useState<Array<{
     id: string;
-    type: 'main' | 'entry' | 'search' | 'view';
+    type: 'main' | 'entry' | 'search' | 'view' | 'gratitude' | 'trends';
     title: string;
     component: React.ReactNode;
     position: { x: number; y: number };
@@ -77,6 +79,69 @@ export default function Journal() {
       zIndex: nextZIndex
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
+    setNextZIndex(prev => prev + 1);
+  }
+
+  function handleShowGratitudePrompts() {
+    playSound('click');
+    const gratitudeWindow = {
+      id: 'gratitude',
+      type: 'gratitude' as const,
+      title: 'Gratitude Prompts',
+      component: (
+        <GratitudePrompts 
+          onCreateEntry={(title, content) => {
+            closeWindow('gratitude');
+            // Create a new journal entry with the gratitude content
+            const windowId = `entry-${Date.now()}`;
+            const newWindow = {
+              id: windowId,
+              type: 'entry' as const,
+              title: 'New Gratitude Entry',
+              component: (
+                <JournalEntry 
+                  onSave={handleSaveEntry} 
+                  onClose={() => closeWindow(windowId)}
+                />
+              ),
+              position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
+              size: { width: 500, height: 400 },
+              zIndex: nextZIndex + 1
+            };
+            setWindows(prev => [...prev, newWindow]);
+            setNextZIndex(prev => prev + 2);
+            
+            // Pre-fill the entry with gratitude content
+            setTimeout(() => {
+              const titleInput = document.querySelector('[data-testid="input-title"]') as HTMLInputElement;
+              const contentTextarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
+              if (titleInput) titleInput.value = title;
+              if (contentTextarea) contentTextarea.value = content;
+            }, 100);
+          }}
+          onClose={() => closeWindow('gratitude')}
+        />
+      ),
+      position: { x: 200 + Math.random() * 150, y: 150 + Math.random() * 100 },
+      size: { width: 450, height: 500 },
+      zIndex: nextZIndex
+    };
+    setWindows(prev => [...prev.filter(w => w.type !== 'gratitude'), gratitudeWindow]);
+    setNextZIndex(prev => prev + 1);
+  }
+
+  function handleShowMoodTrends() {
+    playSound('click');
+    const trendsWindow = {
+      id: 'trends',
+      type: 'trends' as const,
+      title: 'Mood Trends',
+      component: <MoodTrendsWindow onClose={() => closeWindow('trends')} />,
+      position: { x: 180 + Math.random() * 150, y: 120 + Math.random() * 100 },
+      size: { width: 500, height: 450 },
+      zIndex: nextZIndex
+    };
+    setWindows(prev => [...prev.filter(w => w.type !== 'trends'), trendsWindow]);
     setNextZIndex(prev => prev + 1);
   }
 
@@ -147,6 +212,8 @@ export default function Journal() {
       <MenuBar 
         onNewEntry={handleNewEntry}
         onSearchEntries={handleSearchEntries}
+        onShowGratitudePrompts={handleShowGratitudePrompts}
+        onShowMoodTrends={handleShowMoodTrends}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
       />

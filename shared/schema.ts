@@ -13,6 +13,7 @@ export const journalEntries = pgTable("journal_entries", {
   temperature: integer("temperature"), // in fahrenheit
   location: text("location"), // city name for weather
   journalDate: text("journal_date").notNull(), // user-selected date for the entry (YYYY-MM-DD format)
+  voiceMemo: text("voice_memo"), // base64 encoded audio data
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -26,6 +27,7 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries).pick(
   temperature: true,
   location: true,
   journalDate: true,
+  voiceMemo: true,
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
