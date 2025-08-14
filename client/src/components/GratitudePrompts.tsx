@@ -1,5 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useMacSounds } from "@/hooks/useMacSounds";
+import { AutoTagger } from "@/components/AutoTagger";
+import { useQuery } from "@tanstack/react-query";
 
 interface GratitudePromptsProps {
   onCreateEntry: (title: string, content: string) => void;
@@ -30,21 +32,38 @@ const GRATITUDE_PROMPTS = [
 ];
 
 export default function GratitudePrompts({ onCreateEntry, onClose }: GratitudePromptsProps) {
-  const [currentPrompt, setCurrentPrompt] = useState(() => 
-    GRATITUDE_PROMPTS[Math.floor(Math.random() * GRATITUDE_PROMPTS.length)]
-  );
+  const [currentPrompt, setCurrentPrompt] = useState("");
+  const [personalizedPrompts, setPersonalizedPrompts] = useState<string[]>([]);
   const [response, setResponse] = useState("");
   const { playSound } = useMacSounds();
+  
+  // Fetch journal entries to create personalized prompts
+  const { data: entries } = useQuery<any[]>({ 
+    queryKey: ['/api/journal-entries'],
+    staleTime: 5 * 60 * 1000
+  });
+
+  useEffect(() => {
+    if (entries && entries.length > 0) {
+      const contextualPrompts = AutoTagger.analyzeContentForPrompts(entries);
+      const allPrompts = [...GRATITUDE_PROMPTS, ...contextualPrompts];
+      setPersonalizedPrompts(allPrompts);
+      setCurrentPrompt(allPrompts[Math.floor(Math.random() * allPrompts.length)]);
+    } else {
+      setPersonalizedPrompts(GRATITUDE_PROMPTS);
+      setCurrentPrompt(GRATITUDE_PROMPTS[Math.floor(Math.random() * GRATITUDE_PROMPTS.length)]);
+    }
+  }, [entries]);
 
   const getNewPrompt = useCallback(() => {
     playSound('click');
     let newPrompt;
     do {
-      newPrompt = GRATITUDE_PROMPTS[Math.floor(Math.random() * GRATITUDE_PROMPTS.length)];
-    } while (newPrompt === currentPrompt && GRATITUDE_PROMPTS.length > 1);
+      newPrompt = personalizedPrompts[Math.floor(Math.random() * personalizedPrompts.length)];
+    } while (newPrompt === currentPrompt && personalizedPrompts.length > 1);
     setCurrentPrompt(newPrompt);
     setResponse("");
-  }, [currentPrompt, playSound]);
+  }, [currentPrompt, personalizedPrompts, playSound]);
 
   const handleSave = useCallback(() => {
     if (!response.trim()) return;

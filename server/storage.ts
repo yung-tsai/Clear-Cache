@@ -120,6 +120,7 @@ export class MemStorage implements IStorage {
         temperature: null,
         location: null,
         voiceMemo: null,
+        voiceMemos: [],
         journalDate: mockEntry.journalDate,
         createdAt: baseDate,
         updatedAt: baseDate
@@ -152,6 +153,7 @@ export class MemStorage implements IStorage {
       temperature: insertEntry.temperature || null,
       location: insertEntry.location || null,
       voiceMemo: insertEntry.voiceMemo || null,
+      voiceMemos: insertEntry.voiceMemos || [],
       journalDate: insertEntry.journalDate,
     };
     this.entries.set(id, entry);

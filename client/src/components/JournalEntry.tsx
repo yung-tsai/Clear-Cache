@@ -6,7 +6,8 @@ import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
-import VoiceRecorder from "@/components/VoiceRecorder";
+import EnhancedVoiceRecorder from "@/components/EnhancedVoiceRecorder";
+import { AutoTagger } from "@/components/AutoTagger";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -21,6 +22,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [voiceMemo, setVoiceMemo] = useState<string | null>(null);
+  const [voiceMemos, setVoiceMemos] = useState<any[]>([]);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
   const queryClient = useQueryClient();
@@ -67,12 +70,34 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
       setVoiceMemo(entry.voiceMemo || null);
+      try {
+        setVoiceMemos(entry.voiceMemos ? entry.voiceMemos.map(memo => JSON.parse(memo)) : []);
+      } catch (error) {
+        setVoiceMemos([]);
+      }
       setJournalDate(entry.journalDate);
     } else {
       // For new entries, set today's date
       setJournalDate(new Date().toISOString().split('T')[0]);
     }
   }, [entry]);
+
+  // Auto-generate tag suggestions when content or title changes
+  useEffect(() => {
+    if (title || content) {
+      const suggestions = AutoTagger.analyzeTags(content, title);
+      setSuggestedTags(suggestions);
+    }
+  }, [title, content]);
+
+  const addSuggestedTag = (tag: string) => {
+    playSound('click');
+    const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
+    if (!currentTags.includes(tag)) {
+      const newTags = [...currentTags, tag].join(', ');
+      setTags(newTags);
+    }
+  };
 
   // Set up keyboard shortcuts for this entry window
   useKeyboardShortcuts({
@@ -94,6 +119,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       mood,
       voiceMemo,
+      voiceMemos: voiceMemos.map(memo => JSON.stringify(memo)),
       journalDate
     };
 
@@ -191,6 +217,28 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           readOnly={readOnly}
           data-testid="input-tags"
         />
+        {/* Auto-generated tag suggestions */}
+        {!readOnly && suggestedTags.length > 0 && (
+          <div className="tag-suggestions">
+            <span className="tag-suggestions-label">Suggested tags:</span>
+            <div className="suggested-tags">
+              {suggestedTags.map((tag, index) => {
+                const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
+                const isAdded = currentTags.includes(tag);
+                return (
+                  <span
+                    key={index}
+                    className={`suggested-tag ${isAdded ? 'added' : ''}`}
+                    onClick={() => !isAdded && addSuggestedTag(tag)}
+                    data-testid={`suggested-tag-${index}`}
+                  >
+                    {tag} {isAdded && '✓'}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
       
       {/* Mood Section */}
@@ -203,9 +251,9 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
       {/* Voice Memo Section */}
       <div className="mb-2">
-        <VoiceRecorder
-          existingRecording={voiceMemo}
-          onRecordingComplete={(audioData) => setVoiceMemo(audioData || null)}
+        <EnhancedVoiceRecorder
+          existingMemos={voiceMemos}
+          onMemosUpdate={setVoiceMemos}
           disabled={readOnly}
         />
       </div>

@@ -881,3 +881,302 @@
   font-style: italic;
   color: #666;
 }
+
+/* Enhanced Voice Recorder Styles */
+.voice-recorder-header {
+  background: var(--mac-gray);
+  border-bottom: 1px solid #000;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.voice-recorder-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.voice-memos-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px inset #c0c0c0;
+  background: var(--mac-white);
+}
+
+.memos-header {
+  background: var(--mac-light-gray);
+  padding: 4px 8px;
+  border-bottom: 1px solid #ccc;
+  font-size: 8px;
+  font-weight: bold;
+}
+
+.voice-memo-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px;
+  background: var(--mac-white);
+}
+
+.voice-memo-item:last-child {
+  border-bottom: none;
+}
+
+.memo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.memo-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 8px;
+  color: #666;
+}
+
+.memo-duration {
+  font-weight: bold;
+  color: #000;
+}
+
+.memo-date {
+  font-size: 7px;
+}
+
+.memo-transcription {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 6px;
+  margin: 4px 0;
+  font-size: 8px;
+}
+
+.memo-transcription.transcribing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.transcription-label {
+  font-weight: bold;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.transcription-text {
+  font-style: italic;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.transcription-loading {
+  animation: blink 1.5s infinite;
+}
+
+.memo-controls {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.memo-controls .play-btn,
+.memo-controls .delete-btn {
+  padding: 2px 6px;
+  font-size: 8px;
+}
+
+/* Desktop Clock Styles */
+.desktop-clock {
+  position: absolute;
+  top: 30px;
+  left: 20px;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  padding: 8px 12px;
+  font-family: Monaco, "Lucida Console", monospace;
+  text-align: center;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  min-width: 120px;
+}
+
+.clock-time {
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.clock-date {
+  font-size: 10px;
+  color: #666;
+  border-top: 1px solid #ccc;
+  padding-top: 2px;
+}
+
+/* Auto-tagging suggestions */
+.tag-suggestions {
+  background: var(--mac-light-gray);
+  border: 1px inset #c0c0c0;
+  padding: 6px;
+  margin-top: 4px;
+  font-size: 8px;
+}
+
+.tag-suggestions-label {
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.suggested-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.suggested-tag {
+  background: #e0e0e0;
+  border: 1px solid #999;
+  padding: 2px 4px;
+  cursor: pointer;
+  font-size: 7px;
+}
+
+.suggested-tag:hover {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+.suggested-tag.added {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+/* Writing Streak Counter Styles */
+.writing-streak-counter {
+  position: absolute;
+  top: 160px;
+  left: 20px;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  padding: 8px;
+  text-align: center;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  width: 100px;
+}
+
+.streak-header {
+  font-size: 8px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 2px;
+}
+
+.streak-number {
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 1;
+  color: #006600;
+}
+
+.streak-unit {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.streak-total {
+  font-size: 7px;
+  color: #666;
+  border-top: 1px solid #eee;
+  padding-top: 2px;
+}
+
+/* Quick Notes Styles */
+.quick-notes {
+  position: absolute;
+  top: 280px;
+  left: 20px;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  width: 140px;
+  height: 120px;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+}
+
+.quick-notes-header {
+  background: var(--mac-gray);
+  border-bottom: 1px solid #000;
+  padding: 4px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 9px;
+  font-weight: bold;
+}
+
+.add-note-btn {
+  background: var(--mac-light-gray);
+  border: 1px outset #999;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.add-note-btn:active {
+  border: 1px inset #999;
+}
+
+.notes-tabs {
+  background: var(--mac-light-gray);
+  border-bottom: 1px solid #999;
+  display: flex;
+  font-size: 7px;
+}
+
+.note-tab {
+  background: transparent;
+  border: none;
+  padding: 2px 6px;
+  cursor: pointer;
+  position: relative;
+  font-size: 7px;
+}
+
+.note-tab.active {
+  background: var(--mac-white);
+  border-top: 1px solid #000;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+}
+
+.delete-tab {
+  margin-left: 2px;
+  font-weight: bold;
+  color: #999;
+}
+
+.delete-tab:hover {
+  color: #000;
+}
+
+.note-content {
+  flex: 1;
+  border: none;
+  padding: 4px;
+  font-size: 8px;
+  font-family: Monaco, "Lucida Console", monospace;
+  resize: none;
+  outline: none;
+  background: var(--mac-white);
+}
