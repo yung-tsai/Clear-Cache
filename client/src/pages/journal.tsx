@@ -36,6 +36,7 @@ export default function Journal() {
 
   const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
+  const [currentBackground, setCurrentBackground] = useState('classic');
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
 
   // Play startup sound when app loads
@@ -218,9 +219,11 @@ export default function Journal() {
         onShowMoodTrends={handleShowMoodTrends}
         soundEnabled={soundEnabled}
         onToggleSound={toggleSound}
+        onChangeBackground={setCurrentBackground}
+        currentBackground={currentBackground}
       />
       
-      <div className="desktop">
+      <div className={`desktop background-${currentBackground}`}>
         {windows.map(window => (
           <MacWindow
             key={window.id}
