@@ -18,28 +18,27 @@ export function useKeyboardShortcuts({ onNewEntry, onSearchEntries, onSave }: Ke
       if (isCmd) {
         switch (event.key.toLowerCase()) {
           case 'n':
-            // Cmd+N: New Entry
+            // Cmd+N: New Entry - prevent browser's new window
             event.preventDefault();
+            event.stopPropagation();
             playSound('beep');
             onNewEntry();
             break;
           case 'f':
-            // Cmd+F: Search Entries
+            // Cmd+F: Search Entries - prevent browser's find dialog
             event.preventDefault();
+            event.stopPropagation();
             playSound('beep');
             onSearchEntries();
             break;
           case 's':
-            // Cmd+S: Save (if save function is provided)
+            // Cmd+S: Save - prevent browser's save dialog
+            event.preventDefault();
+            event.stopPropagation();
             if (onSave) {
-              event.preventDefault();
               playSound('disk');
               onSave();
             }
-            break;
-          case 'w':
-            // Cmd+W: Close window (let browser handle this naturally)
-            playSound('click');
             break;
         }
       }

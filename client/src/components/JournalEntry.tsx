@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { JournalEntry as JournalEntryType, InsertJournalEntry } from "@shared/schema";
 import { useMacSounds } from "@/hooks/useMacSounds";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 
 interface JournalEntryProps {
@@ -61,6 +62,16 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setTags((entry.tags || []).join(', '));
     }
   }, [entry]);
+
+  // Set up keyboard shortcuts for this entry window
+  useKeyboardShortcuts({
+    onNewEntry: () => {}, // No action for new entry within an entry window
+    onSearchEntries: () => {}, // No action for search within an entry window
+    onSave: !readOnly ? () => {
+      const e = new Event('submit') as any;
+      handleSubmit(e);
+    } : undefined
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
