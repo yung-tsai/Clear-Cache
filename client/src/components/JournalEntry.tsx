@@ -18,6 +18,8 @@ interface JournalEntryProps {
 }
 
 export default function JournalEntry({ entryId, readOnly, onSave, onClose }: JournalEntryProps) {
+  // Track the current entry ID (either passed in or created)
+  const [currentEntryId, setCurrentEntryId] = useState<string | undefined>(entryId);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
@@ -29,10 +31,15 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
 
+  // Update currentEntryId when entryId prop changes
+  useEffect(() => {
+    setCurrentEntryId(entryId);
+  }, [entryId]);
+
   // Fetch existing entry if entryId is provided
   const { data: entry, isLoading } = useQuery<JournalEntryType>({
-    queryKey: ['/api/journal-entries', entryId],
-    enabled: !!entryId
+    queryKey: ['/api/journal-entries', currentEntryId],
+    enabled: !!currentEntryId
   });
 
   // Create mutation
@@ -41,10 +48,16 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       const response = await apiRequest('POST', '/api/journal-entries', data);
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (newEntry) => {
       queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
       setSaveStatus("Entry Saved!");
       setTimeout(() => setSaveStatus(""), 2000);
+      
+      // Update the current entry ID so subsequent saves will update instead of create
+      if (newEntry?.id) {
+        setCurrentEntryId(newEntry.id);
+      }
+      
       onSave?.();
     }
   });
@@ -52,7 +65,10 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: Partial<InsertJournalEntry>) => {
-      const response = await apiRequest('PATCH', `/api/journal-entries/${entryId}`, data);
+      if (!currentEntryId) {
+        throw new Error('No entry ID found for update');
+      }
+      const response = await apiRequest('PATCH', `/api/journal-entries/${currentEntryId}`, data);
       return response.json();
     },
     onSuccess: () => {
@@ -203,7 +219,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       journalDate
     };
 
-    if (entryId) {
+    if (currentEntryId) {
       updateMutation.mutate(entryData);
     } else {
       createMutation.mutate(entryData);
