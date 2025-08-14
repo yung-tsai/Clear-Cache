@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useDraggable } from "@/hooks/useDraggable";
 import { useMacSounds } from "@/hooks/useMacSounds";
 
@@ -12,6 +12,8 @@ interface MacWindowProps {
   onFocus: () => void;
   onPositionChange: (position: { x: number; y: number }) => void;
   onSizeChange?: (size: { width: number; height: number }) => void;
+  isOpen?: boolean;
+  isFocused?: boolean;
   'data-testid'?: string;
 }
 
@@ -25,9 +27,30 @@ export default function MacWindow({
   onFocus,
   onPositionChange,
   onSizeChange,
+  isOpen = true,
+  isFocused = false,
   'data-testid': testId
 }: MacWindowProps) {
   const { playSound } = useMacSounds();
+  const [animationState, setAnimationState] = useState<'entering' | 'visible' | 'exiting' | 'minimizing' | 'restoring'>('entering');
+  
+  // Handle window open/close animations
+  useEffect(() => {
+    if (isOpen) {
+      setAnimationState('entering');
+      const timer = setTimeout(() => setAnimationState('visible'), 400);
+      return () => clearTimeout(timer);
+    } else {
+      setAnimationState('exiting');
+    }
+  }, [isOpen]);
+  
+  // Handle window opening animation
+  useEffect(() => {
+    if (animationState === 'entering') {
+      playSound('click');
+    }
+  }, [animationState, playSound]);
   
   const { ref, isDragging } = useDraggable({
     onDrag: onPositionChange,
@@ -45,14 +68,21 @@ export default function MacWindow({
     e.preventDefault();
     e.stopPropagation();
     playSound('click');
-    onClose();
+    setAnimationState('exiting');
+    setTimeout(() => {
+      onClose();
+    }, 300); // Match the animation duration
   };
 
   const handleMinimize = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     playSound('click');
-    // TODO: Implement minimize functionality
+    setAnimationState('minimizing');
+    setTimeout(() => {
+      // Can be used for minimize functionality later
+      setAnimationState('visible');
+    }, 500);
   };
 
   const handleResize = (e: React.MouseEvent) => {
@@ -88,7 +118,7 @@ export default function MacWindow({
   return (
     <div
       ref={ref}
-      className={`mac-window ${isDragging ? 'dragging' : ''}`}
+      className={`mac-window ${animationState} ${isDragging ? 'dragging' : ''} ${isFocused ? 'focused' : ''}`}
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,

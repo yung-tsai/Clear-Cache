@@ -76,7 +76,7 @@
   }
 }
 
-/* Classic Mac Window Styling */
+/* Classic Mac Window Styling with Animations */
 .mac-window {
   position: absolute;
   background: var(--mac-white);
@@ -85,6 +85,94 @@
   min-width: 300px;
   min-height: 200px;
   cursor: move;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transform-origin: top left;
+}
+
+/* Window Animation States */
+.mac-window.entering {
+  animation: macWindowSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.mac-window.exiting {
+  animation: macWindowSlideOut 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+}
+
+.mac-window.minimizing {
+  animation: macWindowMinimize 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.mac-window.restoring {
+  animation: macWindowRestore 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Vintage Mac Window Animations */
+@keyframes macWindowSlideIn {
+  0% {
+    transform: scale(0.1) translate(-50%, -50%);
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  50% {
+    transform: scale(0.8) translate(-10%, -10%);
+    opacity: 0.8;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+@keyframes macWindowSlideOut {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    transform: scale(0.8) translate(10%, 10%);
+    opacity: 0.6;
+    box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+  }
+  100% {
+    transform: scale(0.1) translate(50%, 50%);
+    opacity: 0;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+@keyframes macWindowMinimize {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.05) translate(-2000%, 2000%);
+    opacity: 0;
+  }
+}
+
+@keyframes macWindowRestore {
+  0% {
+    transform: scale(0.05) translate(-2000%, 2000%);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 1;
+  }
+}
+
+/* Window Focus Animation */
+.mac-window.focused {
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.4);
+  border-color: #a0a0a0;
+}
+
+.mac-window:not(.focused) {
+  opacity: 0.9;
 }
 
 .mac-window-title-bar {

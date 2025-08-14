@@ -18,6 +18,7 @@ export default function Journal() {
     size: { width: number; height: number };
     zIndex: number;
     entryId?: string;
+    isOpen?: boolean;
   }>>([
     {
       id: 'main',
@@ -26,7 +27,8 @@ export default function Journal() {
       component: <MainContent onNewEntry={handleNewEntry} onSearchEntries={handleSearchEntries} />,
       position: { x: 50, y: 50 },
       size: { width: 400, height: 300 },
-      zIndex: 1
+      zIndex: 1,
+      isOpen: true
     }
   ]);
 
@@ -59,7 +61,8 @@ export default function Journal() {
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
       size: { width: 500, height: 400 },
-      zIndex: nextZIndex
+      zIndex: nextZIndex,
+      isOpen: true
     };
     setWindows(prev => [...prev, newWindow]);
     setNextZIndex(prev => prev + 1);
@@ -74,7 +77,8 @@ export default function Journal() {
       component: <SearchWindow onViewEntry={handleViewEntry} onDragStart={setDraggedEntry} />,
       position: { x: 150 + Math.random() * 200, y: 150 + Math.random() * 100 },
       size: { width: 600, height: 400 },
-      zIndex: nextZIndex
+      zIndex: nextZIndex,
+      isOpen: true
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
     setNextZIndex(prev => prev + 1);
@@ -90,7 +94,8 @@ export default function Journal() {
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 500, height: 400 },
       zIndex: nextZIndex,
-      entryId
+      entryId,
+      isOpen: true
     };
     setWindows(prev => [...prev.filter(w => w.entryId !== entryId), editWindow]);
     setNextZIndex(prev => prev + 1);
@@ -152,13 +157,15 @@ export default function Journal() {
       />
       
       <div className="desktop">
-        {windows.map(window => (
+        {windows.map((window, index) => (
           <MacWindow
             key={window.id}
             title={window.title}
             position={window.position}
             size={window.size}
             zIndex={window.zIndex}
+            isOpen={window.isOpen !== false}
+            isFocused={window.zIndex === Math.max(...windows.map(w => w.zIndex))}
             onClose={() => closeWindow(window.id)}
             onFocus={() => bringToFront(window.id)}
             onPositionChange={(position) => updateWindowPosition(window.id, position)}
