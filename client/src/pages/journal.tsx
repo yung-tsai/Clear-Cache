@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MenuBar from "@/components/MenuBar";
 import MacWindow from "@/components/MacWindow";
 import JournalEntry from "@/components/JournalEntry";
 import SearchWindow from "@/components/SearchWindow";
 import TrashIcon from "@/components/TrashIcon";
 import { useMacSounds } from "@/hooks/useMacSounds";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
 export default function Journal() {
   const [windows, setWindows] = useState<Array<{
@@ -31,6 +32,21 @@ export default function Journal() {
   const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
+
+  // Play startup sound when app loads
+  useEffect(() => {
+    // Small delay to let the page fully load
+    const timer = setTimeout(() => {
+      playSound('startup');
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [playSound]);
+
+  // Set up keyboard shortcuts
+  useKeyboardShortcuts({
+    onNewEntry: handleNewEntry,
+    onSearchEntries: handleSearchEntries
+  });
 
   function handleNewEntry() {
     playSound('click');
