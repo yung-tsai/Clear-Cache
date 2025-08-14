@@ -81,10 +81,12 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
   const formatText = (command: string) => {
     playSound('click');
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const selectedText = range.toString();
+    // Get the textarea element from the RichTextEditor
+    const textarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = content.substring(start, end);
       
       if (selectedText) {
         let formattedText = selectedText;
@@ -100,21 +102,36 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
             break;
         }
         
-        document.execCommand('insertText', false, formattedText);
+        const newContent = content.substring(0, start) + formattedText + content.substring(end);
+        setContent(newContent);
+        
+        // Reset cursor position
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
+        }, 0);
       }
     }
   };
 
   const highlightText = (color: string) => {
     playSound('click');
-    const selection = window.getSelection();
-    if (selection && selection.rangeCount > 0) {
-      const range = selection.getRangeAt(0);
-      const selectedText = range.toString();
+    const textarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
+    if (textarea) {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = content.substring(start, end);
       
       if (selectedText) {
         const highlightedText = `[highlight-${color}]${selectedText}[/highlight-${color}]`;
-        document.execCommand('insertText', false, highlightedText);
+        const newContent = content.substring(0, start) + highlightedText + content.substring(end);
+        setContent(newContent);
+        
+        // Reset cursor position
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start + highlightedText.length, start + highlightedText.length);
+        }, 0);
       }
     }
   };
