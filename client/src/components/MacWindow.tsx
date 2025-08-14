@@ -41,12 +41,16 @@ export default function MacWindow({
     onFocus();
   };
 
-  const handleClose = () => {
+  const handleClose = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     playSound('click');
     onClose();
   };
 
-  const handleMinimize = () => {
+  const handleMinimize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     playSound('click');
     // TODO: Implement minimize functionality
   };
@@ -100,10 +104,7 @@ export default function MacWindow({
         <div className="mac-window-controls">
           <button 
             className="mac-window-control"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleMinimize();
-            }}
+            onClick={handleMinimize}
             onMouseDown={(e) => e.stopPropagation()}
             data-testid="button-minimize"
           >
@@ -111,10 +112,7 @@ export default function MacWindow({
           </button>
           <button 
             className="mac-window-control"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClose();
-            }}
+            onClick={handleClose}
             onMouseDown={(e) => e.stopPropagation()}
             data-testid="button-close"
           >

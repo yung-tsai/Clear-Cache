@@ -103,18 +103,12 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
             >
               <div className="flex justify-between items-start">
                 <div className="flex-1">
-                  <strong>{entry.title}</strong> - {new Date(entry.createdAt).toLocaleDateString()}
-                  <div 
-                    className="text-xs mt-1"
-                    dangerouslySetInnerHTML={{ 
-                      __html: convertToHtml(entry.content.substring(0, 100)) + '...' 
-                    }}
-                  />
-                  {(entry.tags || []).length > 0 && (
-                    <div className="text-xs mt-1">
-                      Tags: {(entry.tags || []).join(', ')}
-                    </div>
-                  )}
+                  <div className="text-xs text-gray-600 mb-1" style={{ fontFamily: '"Press Start 2P", Monaco, monospace', fontSize: '6px' }}>
+                    {new Date(entry.createdAt).toLocaleDateString()}
+                  </div>
+                  <div className="font-bold text-xs" style={{ fontFamily: '"Press Start 2P", Monaco, monospace', fontSize: '8px' }}>
+                    {entry.title}
+                  </div>
                 </div>
                 <button
                   className="ml-2 text-xs hover:bg-red-200 px-1"
