@@ -19,6 +19,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
+  const [journalDate, setJournalDate] = useState(new Date().toISOString().split('T')[0]); // Today's date in YYYY-MM-DD format
   const [saveStatus, setSaveStatus] = useState("");
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
@@ -63,6 +64,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setContent(entry.content);
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
+      setJournalDate(entry.journalDate || new Date().toISOString().split('T')[0]);
     }
   }, [entry]);
 
@@ -84,7 +86,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       title,
       content,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      mood
+      mood,
+      journalDate
     };
 
     if (entryId) {
@@ -256,12 +259,26 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       />
       
       <div className="flex justify-between items-center border-t border-gray-400 pt-2">
-        <div className="flex flex-wrap gap-1">
-          {tags.split(',').map(tag => tag.trim()).filter(tag => tag).map((tag, index) => (
-            <span key={index} className="mac-tag" data-testid={`tag-${index}`}>
-              {tag}
-            </span>
-          ))}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold">Date:</label>
+            <input
+              type="date"
+              className="mac-input text-xs"
+              value={journalDate}
+              onChange={(e) => setJournalDate(e.target.value)}
+              readOnly={readOnly}
+              data-testid="input-journal-date"
+              style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '120px' }}
+            />
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {tags.split(',').map(tag => tag.trim()).filter(tag => tag).map((tag, index) => (
+              <span key={index} className="mac-tag" data-testid={`tag-${index}`}>
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
         
         {!readOnly && (

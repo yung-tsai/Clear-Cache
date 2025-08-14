@@ -12,6 +12,7 @@ export const journalEntries = pgTable("journal_entries", {
   weather: text("weather"), // sunny, cloudy, rainy, snowy, stormy
   temperature: integer("temperature"), // in fahrenheit
   location: text("location"), // city name for weather
+  journalDate: text("journal_date").notNull(), // user-selected date for the entry (YYYY-MM-DD format)
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -24,6 +25,7 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries).pick(
   weather: true,
   temperature: true,
   location: true,
+  journalDate: true,
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

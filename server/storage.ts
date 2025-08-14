@@ -40,6 +40,7 @@ export class MemStorage implements IStorage {
       weather: insertEntry.weather || null,
       temperature: insertEntry.temperature || null,
       location: insertEntry.location || null,
+      journalDate: insertEntry.journalDate,
     };
     this.entries.set(id, entry);
     return entry;

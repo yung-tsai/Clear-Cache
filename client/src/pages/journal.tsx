@@ -82,17 +82,17 @@ export default function Journal() {
 
   function handleViewEntry(entryId: string, title: string) {
     playSound('click');
-    const viewWindow = {
-      id: `view-${entryId}`,
-      type: 'view' as const,
-      title: title,
-      component: <JournalEntry entryId={entryId} readOnly onClose={() => closeWindow(`view-${entryId}`)} />,
+    const editWindow = {
+      id: `edit-${entryId}`,
+      type: 'entry' as const,
+      title: `Edit: ${title}`,
+      component: <JournalEntry entryId={entryId} onSave={handleSaveEntry} onClose={() => closeWindow(`edit-${entryId}`)} />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 500, height: 400 },
       zIndex: nextZIndex,
       entryId
     };
-    setWindows(prev => [...prev.filter(w => w.entryId !== entryId), viewWindow]);
+    setWindows(prev => [...prev.filter(w => w.entryId !== entryId), editWindow]);
     setNextZIndex(prev => prev + 1);
   }
 
