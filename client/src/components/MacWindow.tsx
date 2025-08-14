@@ -11,6 +11,7 @@ interface MacWindowProps {
   onClose: () => void;
   onFocus: () => void;
   onPositionChange: (position: { x: number; y: number }) => void;
+  onSizeChange?: (size: { width: number; height: number }) => void;
   'data-testid'?: string;
 }
 
@@ -23,6 +24,7 @@ export default function MacWindow({
   onClose,
   onFocus,
   onPositionChange,
+  onSizeChange,
   'data-testid': testId
 }: MacWindowProps) {
   const { playSound } = useMacSounds();
@@ -47,6 +49,36 @@ export default function MacWindow({
   const handleMinimize = () => {
     playSound('click');
     // TODO: Implement minimize functionality
+  };
+
+  const handleResize = (e: React.MouseEvent) => {
+    if (!onSizeChange) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startWidth = size.width;
+    const startHeight = size.height;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      const newWidth = Math.max(300, startWidth + deltaX);
+      const newHeight = Math.max(200, startHeight + deltaY);
+      
+      onSizeChange({ width: newWidth, height: newHeight });
+    };
+
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   return (
@@ -93,6 +125,13 @@ export default function MacWindow({
       <div className="mac-window-content">
         {children}
       </div>
+      {onSizeChange && (
+        <div 
+          className="mac-window-resize-handle"
+          onMouseDown={handleResize}
+          data-testid="resize-handle"
+        />
+      )}
     </div>
   );
 }

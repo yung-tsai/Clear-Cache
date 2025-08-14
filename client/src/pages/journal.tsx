@@ -3,6 +3,7 @@ import MenuBar from "@/components/MenuBar";
 import MacWindow from "@/components/MacWindow";
 import JournalEntry from "@/components/JournalEntry";
 import SearchWindow from "@/components/SearchWindow";
+import DesktopWeatherWidget from "@/components/DesktopWeatherWidget";
 import TrashIcon from "@/components/TrashIcon";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -126,6 +127,14 @@ export default function Journal() {
     ));
   }
 
+  function updateWindowSize(windowId: string, size: { width: number; height: number }) {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId 
+        ? { ...w, size }
+        : w
+    ));
+  }
+
   function handleTrashDrop() {
     if (draggedEntry) {
       // This will be handled by the SearchWindow component
@@ -153,11 +162,15 @@ export default function Journal() {
             onClose={() => closeWindow(window.id)}
             onFocus={() => bringToFront(window.id)}
             onPositionChange={(position) => updateWindowPosition(window.id, position)}
+            onSizeChange={(size) => updateWindowSize(window.id, size)}
             data-testid={`window-${window.type}-${window.id}`}
           >
             {window.component}
           </MacWindow>
         ))}
+        
+        {/* Desktop Weather Widget */}
+        <DesktopWeatherWidget />
         
         <TrashIcon 
           onDrop={handleTrashDrop}

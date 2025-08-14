@@ -6,7 +6,6 @@ import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
-import WeatherDisplay from "@/components/WeatherDisplay";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -20,9 +19,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
-  const [weather, setWeather] = useState<string | null>(null);
-  const [temperature, setTemperature] = useState<number | null>(null);
-  const [location, setLocation] = useState<string | null>(null);
   const [saveStatus, setSaveStatus] = useState("");
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
@@ -67,9 +63,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setContent(entry.content);
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
-      setWeather(entry.weather || null);
-      setTemperature(entry.temperature || null);
-      setLocation(entry.location || null);
     }
   }, [entry]);
 
@@ -91,10 +84,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       title,
       content,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
-      mood,
-      weather,
-      temperature,
-      location
+      mood
     };
 
     if (entryId) {
@@ -193,21 +183,11 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         />
       </div>
       
-      {/* Mood and Weather Section */}
-      <div className="flex gap-4 mb-2">
+      {/* Mood Section */}
+      <div className="mb-2">
         <MoodSelector 
           selectedMood={mood}
           onMoodChange={setMood}
-        />
-        <WeatherDisplay
-          weather={weather}
-          temperature={temperature}
-          location={location}
-          onWeatherChange={(w, t, l) => {
-            setWeather(w);
-            setTemperature(t);
-            setLocation(l);
-          }}
         />
       </div>
       
