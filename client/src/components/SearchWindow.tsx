@@ -14,6 +14,19 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
 
+  // Convert markdown-like syntax to HTML for display
+  const convertToHtml = (text: string) => {
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/_(.*?)_/g, '<u>$1</u>')
+      .replace(/\[highlight-yellow\](.*?)\[\/highlight-yellow\]/g, '<span class="highlight-yellow">$1</span>')
+      .replace(/\[highlight-pink\](.*?)\[\/highlight-pink\]/g, '<span class="highlight-pink">$1</span>')
+      .replace(/\[highlight-green\](.*?)\[\/highlight-green\]/g, '<span class="highlight-green">$1</span>')
+      .replace(/\[highlight-blue\](.*?)\[\/highlight-blue\]/g, '<span class="highlight-blue">$1</span>')
+      .replace(/\n/g, '<br>');
+  };
+
   // Fetch all entries
   const { data: entries = [], isLoading } = useQuery<JournalEntry[]>({
     queryKey: ['/api/journal-entries']
@@ -91,9 +104,12 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <strong>{entry.title}</strong> - {new Date(entry.createdAt).toLocaleDateString()}
-                  <div className="text-xs mt-1">
-                    {entry.content.substring(0, 100)}...
-                  </div>
+                  <div 
+                    className="text-xs mt-1"
+                    dangerouslySetInnerHTML={{ 
+                      __html: convertToHtml(entry.content.substring(0, 100)) + '...' 
+                    }}
+                  />
                   {(entry.tags || []).length > 0 && (
                     <div className="text-xs mt-1">
                       Tags: {(entry.tags || []).join(', ')}
