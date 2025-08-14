@@ -24,11 +24,11 @@ export default function Journal() {
       component: <MainContent onNewEntry={handleNewEntry} onSearchEntries={handleSearchEntries} />,
       position: { x: 50, y: 50 },
       size: { width: 400, height: 300 },
-      zIndex: 100
+      zIndex: 1
     }
   ]);
 
-  const [nextZIndex, setNextZIndex] = useState(101);
+  const [nextZIndex, setNextZIndex] = useState(10);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
 
