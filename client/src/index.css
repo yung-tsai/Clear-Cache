@@ -101,8 +101,8 @@
   flex: 1;
   text-align: center;
   font-weight: bold;
-  font-size: 9px;
-  font-family: "Press Start 2P", Monaco, monospace;
+  font-size: 12px;
+  font-family: "ChicagoFLF", "Press Start 2P", Monaco, monospace;
 }
 
 .mac-window-controls {
@@ -153,7 +153,8 @@
   margin-right: 4px;
   cursor: pointer;
   position: relative;
-  font-size: 9px;
+  font-size: 12px;
+  font-family: "ChicagoFLF", "Press Start 2P", monospace;
 }
 
 .mac-menu-item:hover,
@@ -178,7 +179,8 @@
   padding: 4px 12px;
   cursor: pointer;
   border-bottom: 1px solid var(--mac-light-gray);
-  font-size: 9px;
+  font-size: 11px;
+  font-family: "ChicagoFLF", "Press Start 2P", monospace;
 }
 
 .mac-dropdown-item:hover {
@@ -215,8 +217,8 @@
   border: 1px solid var(--mac-black);
   background: var(--mac-gray);
   cursor: pointer;
-  font-family: inherit;
-  font-size: inherit;
+  font-family: "ChicagoFLF", "Press Start 2P", monospace;
+  font-size: 11px;
   outline: none;
 }
 
@@ -288,7 +290,8 @@
 
 .mac-widget-title {
   font-weight: bold;
-  font-size: 6px;
+  font-size: 10px;
+  font-family: "ChicagoFLF", "Press Start 2P", monospace;
 }
 
 .mac-widget-btn {

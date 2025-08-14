@@ -19,7 +19,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
-  const [journalDate, setJournalDate] = useState(new Date().toISOString().split('T')[0]); // Today's date in YYYY-MM-DD format
+  const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
@@ -64,7 +64,10 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setContent(entry.content);
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
-      setJournalDate(entry.journalDate || new Date().toISOString().split('T')[0]);
+      setJournalDate(entry.journalDate);
+    } else {
+      // For new entries, set today's date
+      setJournalDate(new Date().toISOString().split('T')[0]);
     }
   }, [entry]);
 
