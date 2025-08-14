@@ -256,6 +256,16 @@
   color: var(--mac-white);
 }
 
+.mac-toolbar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px;
+  background: var(--mac-gray);
+  border: 1px solid var(--mac-border);
+  border-radius: 0;
+}
+
 /* Highlight Colors */
 .highlight-yellow {
   background-color: var(--mac-highlight-yellow);

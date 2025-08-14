@@ -8,6 +8,10 @@ export const journalEntries = pgTable("journal_entries", {
   title: text("title").notNull(),
   content: text("content").notNull(),
   tags: text("tags").array().default([]).notNull(),
+  mood: text("mood"), // happy, sad, excited, calm, anxious, grateful, angry, peaceful
+  weather: text("weather"), // sunny, cloudy, rainy, snowy, stormy
+  temperature: integer("temperature"), // in fahrenheit
+  location: text("location"), // city name for weather
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -16,6 +20,10 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries).pick(
   title: true,
   content: true,
   tags: true,
+  mood: true,
+  weather: true,
+  temperature: true,
+  location: true,
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

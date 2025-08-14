@@ -35,7 +35,11 @@ export class MemStorage implements IStorage {
       id, 
       createdAt: now,
       updatedAt: now,
-      tags: insertEntry.tags || []
+      tags: insertEntry.tags || [],
+      mood: insertEntry.mood || null,
+      weather: insertEntry.weather || null,
+      temperature: insertEntry.temperature || null,
+      location: insertEntry.location || null,
     };
     this.entries.set(id, entry);
     return entry;
