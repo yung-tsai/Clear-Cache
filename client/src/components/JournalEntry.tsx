@@ -24,8 +24,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [mood, setMood] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
@@ -96,81 +94,91 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
-  // Voice-to-text functionality
+  // Voice-to-text functionality using Web Speech API
   const toggleVoiceRecording = async () => {
     if (isRecording) {
       // Stop recording
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-        setIsRecording(false);
-        playSound('click');
-      }
+      setIsRecording(false);
+      setIsTranscribing(true);
+      playSound('click');
     } else {
-      // Start recording
+      // Start recording with Web Speech API
       try {
         playSound('click');
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true
+        
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+          const errorText = "Speech recognition not supported in this browser. Please type your entry manually.";
+          if (content.trim()) {
+            setContent(content + '\n\n' + errorText);
+          } else {
+            setContent(errorText);
           }
-        });
-
-        let options: MediaRecorderOptions = {};
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-          options.mimeType = 'audio/webm;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-          options.mimeType = 'audio/webm';
+          return;
         }
 
-        const mediaRecorder = new MediaRecorder(stream, options);
-        mediaRecorderRef.current = mediaRecorder;
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) {
-            audioChunksRef.current.push(event.data);
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+        
+        let finalTranscript = '';
+        
+        recognition.onstart = () => {
+          setIsRecording(true);
+        };
+        
+        recognition.onresult = (event: any) => {
+          let interimTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript + ' ';
+            } else {
+              interimTranscript += transcript;
+            }
           }
         };
-
-        mediaRecorder.onstop = async () => {
-          setIsTranscribing(true);
+        
+        recognition.onend = () => {
+          setIsRecording(false);
           
-          // Simulate transcription process
-          setTimeout(() => {
-            // Generate a realistic transcription simulation
-            const simulatedTranscriptions = [
-              "Today I had a wonderful morning walk in the park. The weather was perfect and I felt very peaceful.",
-              "I've been thinking about my goals for this year and feeling motivated to make positive changes.",
-              "Had an interesting conversation with a friend today about life and future plans.",
-              "Feeling grateful for all the good things in my life right now.",
-              "Today was challenging but I learned something important about myself."
-            ];
-            
-            const randomTranscription = simulatedTranscriptions[Math.floor(Math.random() * simulatedTranscriptions.length)];
-            
+          if (finalTranscript.trim()) {
             // Append the transcription to existing content
             if (content.trim()) {
-              setContent(content + '\n\n' + randomTranscription);
+              setContent(content + '\n\n' + finalTranscript.trim());
             } else {
-              setContent(randomTranscription);
+              setContent(finalTranscript.trim());
             }
-            
-            setIsTranscribing(false);
-            playSound('click');
-          }, 2000);
-
-          // Stop all audio tracks
-          stream.getTracks().forEach(track => track.stop());
+          }
+          
+          playSound('click');
         };
-
-        mediaRecorder.start();
-        setIsRecording(true);
+        
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsRecording(false);
+          playSound('click');
+          
+          if (event.error === 'no-speech') {
+            const message = "No speech detected. Please try again.";
+            if (content.trim()) {
+              setContent(content + '\n\n' + message);
+            } else {
+              setContent(message);
+            }
+          }
+        };
+        
+        recognition.start();
 
       } catch (error) {
-        console.error('Error accessing microphone:', error);
+        console.error('Error with speech recognition:', error);
         playSound('click');
-        // You could show an error message to the user here
+        setIsRecording(false);
       }
     }
   };
