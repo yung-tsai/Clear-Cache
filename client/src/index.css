@@ -1,0 +1,369 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mac-gray: hsl(0, 0%, 86.7%);
+  --mac-dark-gray: hsl(0, 0%, 50.2%);
+  --mac-black: hsl(0, 0%, 0%);
+  --mac-white: hsl(0, 0%, 100%);
+  --mac-light-gray: hsl(0, 0%, 75.3%);
+  --mac-border: hsl(0, 0%, 0%);
+  --mac-shadow: hsl(0, 0%, 50.2%);
+  --mac-highlight-yellow: hsl(60, 100%, 80%);
+  --mac-highlight-pink: hsl(351, 100%, 86.1%);
+  --mac-highlight-green: hsl(120, 100%, 87.8%);
+  --mac-highlight-blue: hsl(197, 71%, 73.3%);
+  
+  --background: var(--mac-white);
+  --foreground: var(--mac-black);
+  --card: var(--mac-gray);
+  --card-foreground: var(--mac-black);
+  --popover: var(--mac-white);
+  --popover-foreground: var(--mac-black);
+  --primary: var(--mac-black);
+  --primary-foreground: var(--mac-white);
+  --secondary: var(--mac-gray);
+  --secondary-foreground: var(--mac-black);
+  --muted: var(--mac-light-gray);
+  --muted-foreground: var(--mac-black);
+  --accent: var(--mac-light-gray);
+  --accent-foreground: var(--mac-black);
+  --destructive: var(--mac-black);
+  --destructive-foreground: var(--mac-white);
+  --border: var(--mac-border);
+  --input: var(--mac-white);
+  --ring: var(--mac-black);
+  --radius: 0;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: Monaco, "Lucida Console", monospace;
+    font-size: 9px;
+    background: repeating-linear-gradient(
+      45deg,
+      #000,
+      #000 1px,
+      #fff 1px,
+      #fff 2px
+    );
+    height: 100vh;
+    overflow: hidden;
+    cursor: default;
+    user-select: none;
+  }
+}
+
+/* Classic Mac Window Styling */
+.mac-window {
+  position: absolute;
+  background: var(--mac-gray);
+  border: 1px solid var(--mac-black);
+  box-shadow: 2px 2px 0 var(--mac-shadow);
+  min-width: 300px;
+  min-height: 200px;
+  cursor: move;
+}
+
+.mac-window-title-bar {
+  background: var(--mac-gray);
+  height: 18px;
+  border-bottom: 1px solid var(--mac-black);
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  cursor: move;
+}
+
+.mac-window-title {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  font-size: 9px;
+}
+
+.mac-window-controls {
+  display: flex;
+  gap: 2px;
+}
+
+.mac-window-control {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-gray);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+
+.mac-window-control:hover {
+  background: var(--mac-light-gray);
+}
+
+.mac-window-content {
+  padding: 8px;
+  height: calc(100% - 18px);
+  overflow: auto;
+}
+
+/* Menu Bar */
+.mac-menu-bar {
+  background: var(--mac-gray);
+  border-bottom: 1px solid var(--mac-black);
+  height: 20px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  box-shadow: inset -1px -1px 0 var(--mac-shadow);
+}
+
+.mac-menu-item {
+  padding: 2px 8px;
+  margin-right: 4px;
+  cursor: pointer;
+  position: relative;
+  font-size: 9px;
+}
+
+.mac-menu-item:hover,
+.mac-menu-item.active {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+.mac-dropdown {
+  position: absolute;
+  top: 18px;
+  left: 0;
+  background: var(--mac-gray);
+  border: 1px solid var(--mac-black);
+  box-shadow: 2px 2px 0 var(--mac-shadow);
+  display: none;
+  min-width: 120px;
+  z-index: 1001;
+}
+
+.mac-dropdown-item {
+  padding: 4px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--mac-light-gray);
+  font-size: 9px;
+}
+
+.mac-dropdown-item:hover {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+.mac-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+/* Form Elements */
+.mac-input {
+  background: var(--mac-white);
+  border: 1px solid var(--mac-black);
+  padding: 2px 4px;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+.mac-textarea {
+  background: var(--mac-white);
+  border: 1px solid var(--mac-black);
+  padding: 4px;
+  font-family: inherit;
+  font-size: inherit;
+  resize: none;
+  outline: none;
+}
+
+.mac-button {
+  padding: 4px 12px;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-gray);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+.mac-button:hover {
+  background: var(--mac-light-gray);
+}
+
+.mac-button:active {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+.mac-toolbar {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--mac-light-gray);
+  margin-bottom: 4px;
+}
+
+.mac-toolbar-btn {
+  padding: 2px 6px;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-gray);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  outline: none;
+}
+
+.mac-toolbar-btn:hover {
+  background: var(--mac-light-gray);
+}
+
+.mac-toolbar-btn:active {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+/* Highlight Colors */
+.highlight-yellow {
+  background-color: var(--mac-highlight-yellow);
+}
+
+.highlight-pink {
+  background-color: var(--mac-highlight-pink);
+}
+
+.highlight-green {
+  background-color: var(--mac-highlight-green);
+}
+
+.highlight-blue {
+  background-color: var(--mac-highlight-blue);
+}
+
+/* Color Picker */
+.color-picker {
+  display: flex;
+  gap: 2px;
+  margin-left: 8px;
+}
+
+.color-swatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--mac-black);
+  cursor: pointer;
+}
+
+.color-swatch:hover {
+  border: 2px solid var(--mac-black);
+  margin: -1px;
+}
+
+/* Trash Icon */
+.mac-trash {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 48px;
+  height: 56px;
+  background: var(--mac-gray);
+  border: 1px solid var(--mac-black);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 8px;
+}
+
+.mac-trash:hover {
+  background: var(--mac-light-gray);
+}
+
+.mac-trash.drag-over {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+/* Tags */
+.mac-tag {
+  background: var(--mac-light-gray);
+  border: 1px solid var(--mac-black);
+  padding: 1px 4px;
+  font-size: 8px;
+  cursor: pointer;
+  display: inline-block;
+  margin: 2px;
+}
+
+.mac-tag:hover {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+/* Search Results */
+.search-results {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-white);
+}
+
+.search-item {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--mac-light-gray);
+  cursor: pointer;
+}
+
+.search-item:hover {
+  background: var(--mac-black);
+  color: var(--mac-white);
+}
+
+.search-item:last-child {
+  border-bottom: none;
+}
+
+/* Utility Classes */
+.dragging {
+  opacity: 0.7;
+  z-index: 1002;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.desktop {
+  margin-top: 20px;
+  height: calc(100vh - 20px);
+  position: relative;
+}
+
+/* Sound Toggle */
+.sound-toggle {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  font-size: 8px;
+  cursor: pointer;
+}
