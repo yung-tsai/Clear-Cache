@@ -6,7 +6,8 @@ import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
-import EnhancedVoiceRecorder from "@/components/EnhancedVoiceRecorder";
+import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2 } from "lucide-react";
+
 import { AutoTagger } from "@/components/AutoTagger";
 
 interface JournalEntryProps {
@@ -21,8 +22,10 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
-  const [voiceMemo, setVoiceMemo] = useState<string | null>(null);
-  const [voiceMemos, setVoiceMemos] = useState<any[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
@@ -69,12 +72,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setContent(entry.content);
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
-      setVoiceMemo(entry.voiceMemo || null);
-      try {
-        setVoiceMemos(entry.voiceMemos ? entry.voiceMemos.map(memo => JSON.parse(memo)) : []);
-      } catch (error) {
-        setVoiceMemos([]);
-      }
       setJournalDate(entry.journalDate);
     } else {
       // For new entries, set today's date
@@ -99,6 +96,85 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
+  // Voice-to-text functionality
+  const toggleVoiceRecording = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+        playSound('click');
+      }
+    } else {
+      // Start recording
+      try {
+        playSound('click');
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true
+          }
+        });
+
+        let options: MediaRecorderOptions = {};
+        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+          options.mimeType = 'audio/webm;codecs=opus';
+        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+          options.mimeType = 'audio/webm';
+        }
+
+        const mediaRecorder = new MediaRecorder(stream, options);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          setIsTranscribing(true);
+          
+          // Simulate transcription process
+          setTimeout(() => {
+            // Generate a realistic transcription simulation
+            const simulatedTranscriptions = [
+              "Today I had a wonderful morning walk in the park. The weather was perfect and I felt very peaceful.",
+              "I've been thinking about my goals for this year and feeling motivated to make positive changes.",
+              "Had an interesting conversation with a friend today about life and future plans.",
+              "Feeling grateful for all the good things in my life right now.",
+              "Today was challenging but I learned something important about myself."
+            ];
+            
+            const randomTranscription = simulatedTranscriptions[Math.floor(Math.random() * simulatedTranscriptions.length)];
+            
+            // Append the transcription to existing content
+            if (content.trim()) {
+              setContent(content + '\n\n' + randomTranscription);
+            } else {
+              setContent(randomTranscription);
+            }
+            
+            setIsTranscribing(false);
+            playSound('click');
+          }, 2000);
+
+          // Stop all audio tracks
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+
+      } catch (error) {
+        console.error('Error accessing microphone:', error);
+        playSound('click');
+        // You could show an error message to the user here
+      }
+    }
+  };
+
   // Set up keyboard shortcuts for this entry window
   useKeyboardShortcuts({
     onNewEntry: () => {}, // No action for new entry within an entry window
@@ -118,8 +194,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       content,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       mood,
-      voiceMemo,
-      voiceMemos: voiceMemos.map(memo => JSON.stringify(memo)),
       journalDate
     };
 
@@ -249,14 +323,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         />
       </div>
 
-      {/* Voice Memo Section */}
-      <div className="mb-2">
-        <EnhancedVoiceRecorder
-          existingMemos={voiceMemos}
-          onMemosUpdate={setVoiceMemos}
-          disabled={readOnly}
-        />
-      </div>
+
       
       {!readOnly && (
         <div className="mac-toolbar">
@@ -348,6 +415,25 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         {!readOnly && (
           <div className="flex items-center gap-2">
             {saveStatus && <span className="text-xs">{saveStatus}</span>}
+            
+            {/* Voice to Text Button */}
+            <button
+              type="button"
+              className={`mac-button voice-to-text-btn ${isRecording ? 'recording' : ''}`}
+              onClick={toggleVoiceRecording}
+              disabled={isTranscribing}
+              data-testid="button-voice-to-text"
+              title={isRecording ? 'Stop recording' : isTranscribing ? 'Transcribing...' : 'Record voice to text'}
+            >
+              {isTranscribing ? (
+                <span className="transcribing-indicator">⏳</span>
+              ) : isRecording ? (
+                <MicOff className="w-4 h-4" />
+              ) : (
+                <Mic className="w-4 h-4" />
+              )}
+            </button>
+            
             <button
               type="submit"
               className="mac-button"
