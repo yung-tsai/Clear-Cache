@@ -104,7 +104,7 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="text-xs text-gray-600 mb-1" style={{ fontFamily: 'Monaco, monospace', fontSize: '10px' }}>
-                    {entry.journalDate ? new Date(entry.journalDate).toLocaleDateString() : new Date(entry.createdAt).toLocaleDateString()}
+                    {new Date(entry.journalDate || entry.createdAt).toLocaleDateString()}
                   </div>
                   <div className="font-bold text-sm" style={{ fontFamily: 'Monaco, monospace', fontSize: '12px' }}>
                     {entry.title}
