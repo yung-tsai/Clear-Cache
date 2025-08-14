@@ -37,8 +37,27 @@ export default function EnhancedVoiceRecorder({
     
     try {
       playSound('click');
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: 44100,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
+      
+      // Try different formats for better compatibility
+      let options: MediaRecorderOptions = {};
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options.mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        options.mimeType = 'audio/webm';
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        options.mimeType = 'audio/mp4';
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -73,16 +92,21 @@ export default function EnhancedVoiceRecorder({
             title: `Recording ${existingMemos.length + 1}`
           };
           
-          // Start transcription
-          transcribeAudio(newMemo);
-          
           const updatedMemos = [...existingMemos, newMemo];
           onMemosUpdate(updatedMemos);
+          
+          // Start transcription after memo is added
+          setTimeout(() => {
+            transcribeAudio(newMemo);
+          }, 500);
         };
         reader.readAsDataURL(audioBlob);
+        
+        // Stop all audio tracks
+        stream.getTracks().forEach(track => track.stop());
       };
 
-      mediaRecorder.start();
+      mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -103,18 +127,34 @@ export default function EnhancedVoiceRecorder({
     setTranscribingMemoId(memo.id);
     
     try {
-      // Use Web Speech API for transcription simulation
-      // In a real implementation, you'd send the audio to a transcription service
-      setTimeout(() => {
-        const simulatedTranscription = generateSimulatedTranscription();
+      // Check if browser supports speech recognition
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      
+      if (SpeechRecognition) {
+        // For real transcription, we'd need to send audio to a service like OpenAI Whisper
+        // For now, simulate transcription with a realistic delay
+        setTimeout(() => {
+          const simulatedTranscription = generateSimulatedTranscription();
+          const updatedMemos = existingMemos.map(m => 
+            m.id === memo.id ? { ...m, transcription: simulatedTranscription } : m
+          );
+          onMemosUpdate(updatedMemos);
+          setTranscribingMemoId(null);
+        }, 3000);
+      } else {
+        // Fallback: no transcription available
         const updatedMemos = existingMemos.map(m => 
-          m.id === memo.id ? { ...m, transcription: simulatedTranscription } : m
+          m.id === memo.id ? { ...m, transcription: "Transcription not available in this browser" } : m
         );
         onMemosUpdate(updatedMemos);
         setTranscribingMemoId(null);
-      }, 2000);
+      }
     } catch (error) {
       console.error('Transcription error:', error);
+      const updatedMemos = existingMemos.map(m => 
+        m.id === memo.id ? { ...m, transcription: "Transcription failed" } : m
+      );
+      onMemosUpdate(updatedMemos);
       setTranscribingMemoId(null);
     }
   }, [existingMemos, onMemosUpdate]);
@@ -137,21 +177,39 @@ export default function EnhancedVoiceRecorder({
     }
 
     playSound('click');
-    const audioBlob = new Blob([Uint8Array.from(atob(memo.audioData), c => c.charCodeAt(0))], { type: 'audio/webm' });
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    
-    setPlayingMemoId(memo.id);
-    
-    audio.onended = () => {
+    try {
+      // Convert base64 back to blob
+      const binaryString = atob(memo.audioData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const audioBlob = new Blob([bytes], { type: 'audio/webm' });
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      
+      setPlayingMemoId(memo.id);
+      
+      audio.onended = () => {
+        setPlayingMemoId(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audio.onerror = () => {
+        console.error('Error playing audio');
+        setPlayingMemoId(null);
+        URL.revokeObjectURL(audioUrl);
+      };
+      
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+        setPlayingMemoId(null);
+        URL.revokeObjectURL(audioUrl);
+      });
+    } catch (error) {
+      console.error('Error converting audio data:', error);
       setPlayingMemoId(null);
-      URL.revokeObjectURL(audioUrl);
-    };
-    
-    audio.play().catch(error => {
-      console.error('Error playing audio:', error);
-      setPlayingMemoId(null);
-    });
+    }
   }, [playingMemoId, playSound]);
 
   const deleteMemo = useCallback((memoId: string) => {

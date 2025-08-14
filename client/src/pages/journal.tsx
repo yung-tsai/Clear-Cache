@@ -7,8 +7,7 @@ import GratitudePrompts from "@/components/GratitudePrompts";
 import MoodTrendsWindow from "@/components/MoodTrendsWindow";
 import DesktopWeatherWidget from "@/components/DesktopWeatherWidget";
 import DesktopClock from "@/components/DesktopClock";
-import WritingStreakCounter from "@/components/WritingStreakCounter";
-import QuickNotes from "@/components/QuickNotes";
+
 import TrashIcon from "@/components/TrashIcon";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
@@ -241,8 +240,6 @@ export default function Journal() {
         
         {/* Desktop Widgets */}
         <DesktopClock />
-        <WritingStreakCounter />
-        <QuickNotes />
         <DesktopWeatherWidget />
         
         <TrashIcon 
