@@ -68,14 +68,22 @@ export default function MacWindow({
         <div className="mac-window-controls">
           <button 
             className="mac-window-control"
-            onClick={handleMinimize}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMinimize();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
             data-testid="button-minimize"
           >
             -
           </button>
           <button 
             className="mac-window-control"
-            onClick={handleClose}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClose();
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
             data-testid="button-close"
           >
             ×

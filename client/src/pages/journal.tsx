@@ -28,17 +28,18 @@ export default function Journal() {
     }
   ]);
 
-  const [nextZIndex, setNextZIndex] = useState(10);
+  const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
 
   function handleNewEntry() {
     playSound('click');
+    const windowId = `entry-${Date.now()}`;
     const newWindow = {
-      id: `entry-${Date.now()}`,
+      id: windowId,
       type: 'entry' as const,
       title: 'New Journal Entry',
-      component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(`entry-${Date.now()}`)} />,
+      component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
       size: { width: 500, height: 400 },
       zIndex: nextZIndex
