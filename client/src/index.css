@@ -49,13 +49,21 @@
     @apply bg-background text-foreground;
     font-family: Monaco, "Lucida Console", monospace;
     font-size: 9px;
-    background: repeating-linear-gradient(
-      45deg,
-      #000,
-      #000 1px,
-      #fff 1px,
-      #fff 2px
-    );
+    background: 
+      repeating-linear-gradient(
+        45deg,
+        #666,
+        #666 1px,
+        #999 1px,
+        #999 2px
+      ),
+      repeating-linear-gradient(
+        -45deg,
+        #666,
+        #666 1px,
+        #999 1px,
+        #999 2px
+      );
     height: 100vh;
     overflow: hidden;
     cursor: default;
@@ -75,7 +83,7 @@
 }
 
 .mac-window-title-bar {
-  background: linear-gradient(to bottom, #f0f0f0 0%, #d0d0d0 50%, #c0c0c0 100%);
+  background: #f0f0f0;
   height: 20px;
   border-bottom: 1px inset #c0c0c0;
   display: flex;
