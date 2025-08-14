@@ -1,6 +1,6 @@
 # Overview
 
-This is a journaling application called "MacJournal II" that mimics the classic Mac OS interface and experience. It's a full-stack web application built with React on the frontend and Express.js on the backend, designed to provide a nostalgic Mac-like desktop environment for writing and managing journal entries. The app features draggable windows, Mac-style UI components, and authentic Mac sounds for interactions.
+This is a journaling application called "MacJournal II" that mimics the classic Mac OS interface and experience. It's a full-stack web application built with React on the frontend and Express.js on the backend, designed to provide a nostalgic Mac-like desktop environment for writing and managing journal entries. The app features draggable windows, Mac-style UI components, authentic Mac sounds for interactions, rich text formatting with color highlighting, and search functionality.
 
 # User Preferences
 
@@ -45,6 +45,15 @@ Preferred communication style: Simple, everyday language.
 ## Key Design Decisions
 - **Mac OS Aesthetic**: Complete visual and auditory recreation of classic Mac OS interface
 - **Window Management**: Custom implementation of draggable, focusable windows with z-index management
+- **Rich Text Formatting**: Toolbar-based approach with markdown-like syntax for storage and HTML rendering for display
+- **Sound System**: Toggle-able authentic Mac keyboard typing and mouse click sounds using Web Audio API
+- **Search Functionality**: Full-text search across journal entries, tags, and dates with proper highlight rendering
 - **Modular Storage**: Interface-based storage system allowing easy switching between in-memory and database storage
 - **Type Safety**: Full TypeScript implementation with shared schemas between frontend and backend
 - **Component Architecture**: Separation of UI components, business logic, and data management
+
+## Recent Changes (August 2025)
+- Fixed backwards text typing issue by simplifying rich text editor implementation
+- Implemented proper highlight rendering in search results and read-only views
+- Added toggle-able Mac sounds for keyboard typing and mouse interactions
+- Enhanced search functionality with markup-to-HTML conversion for proper formatting display
