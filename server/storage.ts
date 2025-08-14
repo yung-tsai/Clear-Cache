@@ -15,6 +15,117 @@ export class MemStorage implements IStorage {
 
   constructor() {
     this.entries = new Map();
+    this.addMockEntries();
+  }
+
+  private addMockEntries() {
+    // Create mock entries with different moods and dates
+    const mockEntries = [
+      {
+        title: "Beautiful Morning",
+        content: "Woke up to sunshine streaming through my window. The birds were singing and I felt ready to take on the world. Coffee tastes extra good today!",
+        mood: "happy",
+        journalDate: "2025-01-15",
+        tags: ["morning", "sunshine", "coffee"]
+      },
+      {
+        title: "Challenging Day at Work",
+        content: "Had a difficult presentation today. My boss wasn't happy with the results and I'm feeling pretty stressed about the feedback. Need to work on improving.",
+        mood: "anxious",
+        journalDate: "2025-01-16",
+        tags: ["work", "stress", "feedback"]
+      },
+      {
+        title: "Peaceful Evening",
+        content: "Spent the evening reading a good book by the fireplace. Sometimes the simple pleasures are the best. Feeling very zen right now.",
+        mood: "peaceful",
+        journalDate: "2025-01-17",
+        tags: ["reading", "relaxation", "evening"]
+      },
+      {
+        title: "Exciting News!",
+        content: "Got the promotion I've been working towards! I can barely contain my excitement. All those late nights were worth it. Time to celebrate!",
+        mood: "excited",
+        journalDate: "2025-01-18",
+        tags: ["promotion", "work", "celebration"]
+      },
+      {
+        title: "Rainy Day Blues",
+        content: "It's been raining all day and I'm feeling a bit down. Sometimes the weather really affects my mood. Maybe I should plan something fun for tomorrow.",
+        mood: "sad",
+        journalDate: "2025-01-19",
+        tags: ["weather", "rain", "mood"]
+      },
+      {
+        title: "Gratitude Practice",
+        content: "Taking time to appreciate all the good things in my life today. Family, health, a roof over my head - there's so much to be thankful for.",
+        mood: "grateful",
+        journalDate: "2025-01-20",
+        tags: ["gratitude", "family", "health"]
+      },
+      {
+        title: "Meditation Session",
+        content: "Had a wonderful 20-minute meditation this morning. Feeling centered and calm. It's amazing how much clarity comes from just sitting quietly.",
+        mood: "calm",
+        journalDate: "2025-01-21",
+        tags: ["meditation", "mindfulness", "morning"]
+      },
+      {
+        title: "Traffic Frustration",
+        content: "Got stuck in traffic for over an hour today because of construction. Was running late for an important meeting. Really need to work on my patience.",
+        mood: "angry",
+        journalDate: "2025-01-22",
+        tags: ["traffic", "late", "frustration"]
+      },
+      {
+        title: "Weekend Adventure",
+        content: "Went hiking with friends today! The views from the summit were absolutely breathtaking. Feeling energized and connected to nature.",
+        mood: "excited",
+        journalDate: "2025-01-25",
+        tags: ["hiking", "friends", "nature"]
+      },
+      {
+        title: "Quiet Sunday",
+        content: "A perfectly peaceful Sunday at home. Made pancakes, did some gardening, and caught up on my favorite TV show. Simple pleasures bring such joy.",
+        mood: "peaceful",
+        journalDate: "2025-01-26",
+        tags: ["Sunday", "home", "gardening"]
+      },
+      {
+        title: "Learning Something New",
+        content: "Started learning to play guitar today! My fingers are sore but I'm so excited to be picking up a new skill. Music has always been a dream of mine.",
+        mood: "happy",
+        journalDate: "2025-01-27",
+        tags: ["guitar", "learning", "music"]
+      },
+      {
+        title: "Family Dinner",
+        content: "Had dinner with my parents tonight. So grateful for these moments together. Mom made my favorite meal and we talked for hours about everything and nothing.",
+        mood: "grateful",
+        journalDate: "2025-01-28",
+        tags: ["family", "dinner", "parents"]
+      }
+    ];
+
+    mockEntries.forEach((mockEntry, index) => {
+      const id = `mock-${index + 1}`;
+      const baseDate = new Date(mockEntry.journalDate);
+      const entry: JournalEntry = {
+        id,
+        title: mockEntry.title,
+        content: mockEntry.content,
+        tags: mockEntry.tags,
+        mood: mockEntry.mood,
+        weather: null,
+        temperature: null,
+        location: null,
+        voiceMemo: null,
+        journalDate: mockEntry.journalDate,
+        createdAt: baseDate,
+        updatedAt: baseDate
+      };
+      this.entries.set(id, entry);
+    });
   }
 
   async getJournalEntry(id: string): Promise<JournalEntry | undefined> {
