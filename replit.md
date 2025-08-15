@@ -57,3 +57,8 @@ Preferred communication style: Simple, everyday language.
 - Implemented proper highlight rendering in search results and read-only views
 - Added toggle-able Mac sounds for keyboard typing and mouse interactions
 - Enhanced search functionality with markup-to-HTML conversion for proper formatting display
+- Fixed duplicate entry issue by implementing proper entry ID tracking after creation
+- Added background selection feature under View menu with 6 customizable desktop backgrounds
+- Updated classic Mac background to solid light gray (#e0e0e0) per user preference
+- Improved window sizing: new journal entries now open with 700x500 dimensions for better visibility
+- Centered main MacJournal window on app startup for better initial positioning

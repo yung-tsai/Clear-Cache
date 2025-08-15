@@ -28,7 +28,7 @@ export default function Journal() {
       type: 'main',
       title: 'MacJournal II',
       component: <MainContent onNewEntry={handleNewEntry} onSearchEntries={handleSearchEntries} />,
-      position: { x: 50, y: 50 },
+      position: { x: window.innerWidth ? (window.innerWidth - 400) / 2 : 200, y: window.innerHeight ? (window.innerHeight - 300) / 2 : 150 },
       size: { width: 400, height: 300 },
       zIndex: 1
     }
@@ -63,7 +63,7 @@ export default function Journal() {
       title: 'New Journal Entry',
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
-      size: { width: 500, height: 400 },
+      size: { width: 700, height: 500 },
       zIndex: nextZIndex
     };
     setWindows(prev => [...prev, newWindow]);
