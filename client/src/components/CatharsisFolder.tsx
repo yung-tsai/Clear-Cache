@@ -119,7 +119,7 @@ export default function CatharsisFolder({ onPlaySound }: CatharsisFolderProps) {
     <>
       {/* Folder Icon */}
       <div
-        className="fixed z-40 cursor-pointer select-none"
+        className="fixed z-50 cursor-pointer select-none"
         style={{
           left: position.x,
           top: position.y,
@@ -133,25 +133,28 @@ export default function CatharsisFolder({ onPlaySound }: CatharsisFolderProps) {
           {/* Folder Icon SVG */}
           <div className="w-16 h-16 mb-1">
             <svg viewBox="0 0 64 64" className="w-full h-full">
-              <path
-                d="M8 16 L28 16 L32 20 L56 20 L56 48 L8 48 Z"
-                fill="#D4A574"
-                stroke="#B8956A"
-                strokeWidth="1"
-              />
-              <path
-                d="M8 20 L56 20 L56 48 L8 48 Z"
-                fill="#E6C49A"
-                stroke="#B8956A"
-                strokeWidth="1"
-              />
+              {/* Classic Mac folder style - more geometric and pixelated */}
+              <rect x="8" y="20" width="48" height="28" fill="#C0C0C0" stroke="#808080" strokeWidth="1"/>
+              <rect x="8" y="16" width="20" height="8" fill="#C0C0C0" stroke="#808080" strokeWidth="1"/>
+              <rect x="28" y="16" width="4" height="4" fill="#C0C0C0" stroke="#808080" strokeWidth="1"/>
+              <rect x="32" y="20" width="24" height="4" fill="#C0C0C0" stroke="#808080" strokeWidth="1"/>
+              
+              {/* Classic Mac folder tab pattern */}
+              <rect x="10" y="18" width="16" height="2" fill="#A0A0A0"/>
+              <rect x="30" y="18" width="2" height="2" fill="#A0A0A0"/>
+              
+              {/* Shadow/depth lines */}
+              <line x1="56" y1="20" x2="56" y2="48" stroke="#808080" strokeWidth="1"/>
+              <line x1="8" y1="48" x2="56" y2="48" stroke="#808080" strokeWidth="1"/>
+              
               {/* Heart icon to indicate catharsis */}
-              <path
-                d="M32 30 C30 26, 24 26, 24 32 C24 36, 32 42, 32 42 C32 42, 40 36, 40 32 C40 26, 34 26, 32 30 Z"
-                fill="#E74C3C"
-                stroke="#C0392B"
-                strokeWidth="0.5"
-              />
+              <rect x="30" y="30" width="2" height="2" fill="#FF0000"/>
+              <rect x="32" y="30" width="2" height="2" fill="#FF0000"/>
+              <rect x="28" y="32" width="2" height="2" fill="#FF0000"/>
+              <rect x="30" y="32" width="4" height="2" fill="#FF0000"/>
+              <rect x="34" y="32" width="2" height="2" fill="#FF0000"/>
+              <rect x="30" y="34" width="4" height="2" fill="#FF0000"/>
+              <rect x="32" y="36" width="2" height="2" fill="#FF0000"/>
             </svg>
           </div>
           

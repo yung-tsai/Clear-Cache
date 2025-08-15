@@ -29,8 +29,8 @@ export default function Journal() {
       type: 'main',
       title: 'MacJournal II',
       component: <MainContent onNewEntry={handleNewEntry} onSearchEntries={handleSearchEntries} />,
-      position: { x: window.innerWidth ? (window.innerWidth - 400) / 2 : 200, y: window.innerHeight ? (window.innerHeight - 300) / 2 : 150 },
-      size: { width: 400, height: 300 },
+      position: { x: window.innerWidth ? (window.innerWidth - 500) / 2 : 200, y: window.innerHeight ? (window.innerHeight - 320) / 2 : 150 },
+      size: { width: 500, height: 320 },
       zIndex: 1
     }
   ]);
@@ -252,7 +252,7 @@ export default function Journal() {
           data-testid="trash-icon"
         />
         
-        <CatharsisFolder onPlaySound={playSound} />
+        <CatharsisFolder onPlaySound={(soundName) => playSound(soundName as any)} />
       </div>
     </div>
   );

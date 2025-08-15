@@ -437,15 +437,17 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         </div>
       )}
       
-      <RichTextEditor
-        value={content}
-        onChange={setContent}
-        onCatharsisUpdate={handleCatharsisUpdate}
-        catharsisItems={catharsisItems}
-        placeholder="Start writing your journal entry..."
-        readOnly={readOnly}
-        data-testid="textarea-content"
-      />
+      <div className="flex-1 min-h-0 mb-4">
+        <RichTextEditor
+          value={content}
+          onChange={setContent}
+          onCatharsisUpdate={handleCatharsisUpdate}
+          catharsisItems={catharsisItems}
+          placeholder="Start writing your journal entry..."
+          readOnly={readOnly}
+          data-testid="textarea-content"
+        />
+      </div>
       
       <div className="flex justify-between items-center border-t border-gray-400 pt-2">
         <div className="flex items-center gap-4">
