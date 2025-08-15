@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState } from "react";
+import { Heart } from "lucide-react";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import StressLevelPopover from "./StressLevelPopover";
 import type { CatharsisItem } from "@shared/schema";
