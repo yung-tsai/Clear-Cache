@@ -1,0 +1,151 @@
+Build an additive “Compose → Process” catharsis system for a retro journal app. Do not refactor existing code.
+Mount only to a contenteditable element: [data-editor][data-entry-id]. Use the prefix sr- for all classes, functions, events, and storage keys. Pure JS/CSS, no deps.
+
+Modes
+
+Compose mode: user writes and tags stressful spots.
+
+Process mode: user performs cathartic actions (Shred/Trash/Stamp) on tagged spots.
+Add a simple header toggle: Compose | Process.
+
+Capture (Compose)
+
+Inline tag toolbar (selection → tag)
+
+On text selection inside [data-editor], show a tiny floating toolbar near the caret with buttons: Stress, Anger, Sad, Highlight, Trash Later.
+
+Clicking a button wraps selection as:
+
+<span class="sr-hl" data-id="…" data-emotion="stress" data-intent?="trash">…</span>
+
+
+Persist a highlight record with character offsets against the entry’s plain text.
+
+Block-level tagging (margin flag)
+
+Treat each paragraph (<p>) as a block with stable data-block-id.
+
+On paragraph hover, show a left-gutter flag (⚑). Clicking opens the same emotion menu.
+
+Tag applies a class .sr-block-tag--{emotion} and persists as a block highlight.
+
+Hold-to-mark
+
+If the user presses and holds on a non-empty selection ~600ms, auto-apply Stress.
+
+Context menu on highlights
+
+Right-click on .sr-hl shows a custom menu: Remove Tag, Trash Later, Shred Later.
+
+Remove unwraps and deletes the record; Trash/Shred Later sets data-intent and updates the record.
+
+Process (Catharsis)
+
+On leaving the editor or saving, show a Post-Entry Ritual modal:
+
+“You marked N stressful spots — process them now?” → Process Now / Later
+
+Process Now opens a retro-styled screen that lists queued items (grouped by emotion) with actions:
+
+Shred (animate → blur/hide in entry view), Trash (collapse/remove in view), Stamp (apply “VOID/DONE” visual).
+
+Actions are reversible by default (undo stack + “Restore” link on each processed item).
+
+Stress Inbox (Action Queue)
+
+Maintain a sidebar list (Stress Inbox) that mirrors all new highlights as queued items, each pointing to the entry + location.
+
+Clicking an item jumps/scrolls to the highlight in context.
+
+Weekly “Trash Day”
+
+If there are unprocessed items for ≥ 7 days since sr_lastReview, show a banner on load: Trash Day → batch process or snooze.
+
+Play a short retro chime on completion.
+
+Storage
+
+Use localStorage. Keys: sr_entries, sr_highlights, sr_queue, sr_lastReview.
+
+Entry (existing or create if missing):
+
+{
+  "id": "entry_2025-08-15T10:12",
+  "text": "…",
+  "createdAt": 1692100000000,
+  "updatedAt": 1692100500000
+}
+
+
+Highlight (source of truth)
+
+{
+  "id": "hl_01",
+  "entryId": "entry_2025-08-15T10:12",
+  "type": "range",              // "range" | "block"
+  "start": 128, "end": 162,     // omit if type === "block"
+  "blockId": null,              // set if type === "block"
+  "emotion": "stress",          // anger|sad|anxious|happy|neutral|highlight
+  "intent": "trash",            // optional: trash|shred
+  "state": "new",               // new|processed
+  "action": null,               // set on processing: trash|shred|stamp
+  "createdAt": 1692100100000,
+  "processedAt": null
+}
+
+
+Queue item (mirror/pointer)
+
+{
+  "id": "aq_01",
+  "highlightId": "hl_01",
+  "entryId": "entry_2025-08-15T10:12",
+  "emotion": "stress",
+  "state": "queued"             // queued|done
+}
+
+Event Flow
+
+mouseup in editor → if window.getSelection() non-empty → show toolbar near caret.
+
+Toolbar click → wrap selection → persist highlight → add/refresh queue item.
+
+Paragraph hover → show ⚑ → choose emotion → persist block highlight.
+
+Save/Exit → count state:"new" highlights → show Post-Entry Ritual modal.
+
+Process actions set state:"processed", action, processedAt; queue item → done; update entry view (blur/hide/stamp).
+
+Constraints & A11y
+
+Don’t modify global styles; position UI (.sr-toolbar, .sr-context) absolutely and hide by default.
+
+Normalize selections to contiguous text before wrapping; if multi-node, block with a gentle toast.
+
+Keyboard: Cmd/Ctrl+1..5 = emotions; Esc closes toolbars/menus. Provide keyboard alternatives for Process actions.
+
+Add aria-labels (e.g., aria-label="Marked as stress"), and aria-live confirmations on actions.
+
+Minimal API (export)
+
+srInitEditor(rootEl)
+
+srWrapSelection({ emotion, intent })
+
+srTagBlock(blockEl, emotion)
+
+srRemoveTag(id)
+
+srProcessAction(highlightId, action) // updates state + view
+
+Acceptance
+
+Selecting text shows toolbar; clicking Stress wraps and persists; survives reload.
+
+Hovering a paragraph shows ⚑; tagging applies class and persists; survives reload.
+
+Long-press marks Stress.
+
+Post-Entry Ritual appears with correct count; Process Now updates highlights, queue, and entry view (undo available).
+
+Weekly Trash Day triggers after 7 days with queued items and supports batch actions.
