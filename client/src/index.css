@@ -988,16 +988,31 @@
 
 /* Rich Text Editor */
 .rich-text-editor {
-  background: var(--mac-white);
-  border: 1px solid var(--mac-black);
-  padding: 4px;
-  font-family: inherit;
-  font-size: inherit;
-  resize: none;
-  outline: none;
-  min-height: 150px;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
+  @apply h-full flex flex-col;
+}
+
+.editor-header {
+  @apply flex items-center justify-between p-2 bg-gray-100 border-b border-gray-400;
+}
+
+.catharsis-info {
+  @apply flex items-center gap-1 text-xs text-gray-600;
+}
+
+.formatting-hints {
+  @apply text-xs text-gray-500;
+}
+
+.hint {
+  @apply italic;
+}
+
+.rich-text-input {
+  @apply flex-1 p-3 border-none outline-none resize-none bg-white;
+  font-family: Monaco, "Lucida Console", monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  tab-size: 2;
 }
 
 .rich-text-editor .bold {

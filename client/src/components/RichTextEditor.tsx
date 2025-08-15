@@ -39,6 +39,194 @@ export default function RichTextEditor({
     if (e.key !== 'Tab') {
       playSound('type');
     }
+
+    const textarea = e.currentTarget;
+    const { selectionStart, selectionEnd } = textarea;
+    const currentValue = textarea.value;
+    
+    // Handle keyboard shortcuts
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+      switch (e.key.toLowerCase()) {
+        case 'b':
+          e.preventDefault();
+          applyFormatting('**', '**', 'bold text');
+          return;
+        case 'i':
+          e.preventDefault();
+          applyFormatting('*', '*', 'italic text');
+          return;
+        case 'u':
+          e.preventDefault();
+          applyFormatting('_', '_', 'underlined text');
+          return;
+      }
+    }
+
+    // Handle Tab for indentation
+    if (e.key === 'Tab') {
+      e.preventDefault();
+      const lineStart = currentValue.lastIndexOf('\n', selectionStart - 1) + 1;
+      const lineContent = currentValue.substring(lineStart, selectionStart);
+      
+      if (e.shiftKey) {
+        // Shift+Tab: Remove indentation
+        if (lineContent.startsWith('  ')) {
+          const newValue = currentValue.substring(0, lineStart) + 
+                          lineContent.substring(2) + 
+                          currentValue.substring(selectionStart);
+          onChange(newValue);
+          setTimeout(() => {
+            textarea.setSelectionRange(selectionStart - 2, selectionEnd - 2);
+          }, 0);
+        }
+      } else {
+        // Tab: Add indentation
+        const newValue = currentValue.substring(0, lineStart) + 
+                        '  ' + lineContent + 
+                        currentValue.substring(selectionStart);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(selectionStart + 2, selectionEnd + 2);
+        }, 0);
+      }
+      return;
+    }
+
+    // Handle Enter for auto-formatting
+    if (e.key === 'Enter') {
+      const lineStart = currentValue.lastIndexOf('\n', selectionStart - 1) + 1;
+      const lineContent = currentValue.substring(lineStart, selectionStart);
+      
+      // Check for bullet point continuation
+      const bulletMatch = lineContent.match(/^(\s*)-\s(.*)$/);
+      const numberedMatch = lineContent.match(/^(\s*)(\d+)\.\s(.*)$/);
+      
+      if (bulletMatch) {
+        e.preventDefault();
+        const indent = bulletMatch[1];
+        const content = bulletMatch[2];
+        
+        if (content.trim() === '') {
+          // Empty bullet point - remove it and unindent
+          const newValue = currentValue.substring(0, lineStart) + 
+                          currentValue.substring(selectionStart);
+          onChange(newValue);
+          setTimeout(() => {
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // Continue bullet list
+          const newBullet = `\n${indent}- `;
+          const newValue = currentValue.substring(0, selectionStart) + 
+                          newBullet + 
+                          currentValue.substring(selectionEnd);
+          onChange(newValue);
+          setTimeout(() => {
+            textarea.setSelectionRange(selectionStart + newBullet.length, selectionStart + newBullet.length);
+          }, 0);
+        }
+        return;
+      }
+      
+      if (numberedMatch) {
+        e.preventDefault();
+        const indent = numberedMatch[1];
+        const currentNum = parseInt(numberedMatch[2]);
+        const content = numberedMatch[3];
+        
+        if (content.trim() === '') {
+          // Empty numbered item - remove it
+          const newValue = currentValue.substring(0, lineStart) + 
+                          currentValue.substring(selectionStart);
+          onChange(newValue);
+          setTimeout(() => {
+            textarea.setSelectionRange(lineStart, lineStart);
+          }, 0);
+        } else {
+          // Continue numbered list
+          const nextNum = currentNum + 1;
+          const newNumbered = `\n${indent}${nextNum}. `;
+          const newValue = currentValue.substring(0, selectionStart) + 
+                          newNumbered + 
+                          currentValue.substring(selectionEnd);
+          onChange(newValue);
+          setTimeout(() => {
+            textarea.setSelectionRange(selectionStart + newNumbered.length, selectionStart + newNumbered.length);
+          }, 0);
+        }
+        return;
+      }
+    }
+
+    // Handle Space for auto-formatting
+    if (e.key === ' ') {
+      const lineStart = currentValue.lastIndexOf('\n', selectionStart - 1) + 1;
+      const lineContent = currentValue.substring(lineStart, selectionStart);
+      
+      // Auto-bullet point: "- " -> bullet
+      if (lineContent === '-') {
+        e.preventDefault();
+        const newValue = currentValue.substring(0, lineStart) + 
+                        '- ' + 
+                        currentValue.substring(selectionStart);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(selectionStart + 1, selectionStart + 1);
+        }, 0);
+        return;
+      }
+      
+      // Auto-numbered list: "1. " -> numbered
+      const numberedPattern = /^(\d+)\.$/;
+      if (numberedPattern.test(lineContent)) {
+        e.preventDefault();
+        const newValue = currentValue.substring(0, lineStart) + 
+                        lineContent + ' ' + 
+                        currentValue.substring(selectionStart);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(selectionStart + 1, selectionStart + 1);
+        }, 0);
+        return;
+      }
+    }
+  };
+
+  const applyFormatting = (prefix: string, suffix: string, placeholder: string) => {
+    if (!editorRef.current) return;
+    
+    const textarea = editorRef.current;
+    const { selectionStart, selectionEnd } = textarea;
+    const selectedText = value.substring(selectionStart, selectionEnd);
+    
+    let newText: string;
+    let newCursorPos: number;
+    
+    if (selectedText) {
+      // Text is selected, wrap it
+      newText = value.substring(0, selectionStart) + 
+               prefix + selectedText + suffix + 
+               value.substring(selectionEnd);
+      newCursorPos = selectionEnd + prefix.length + suffix.length;
+    } else {
+      // No selection, insert placeholder
+      newText = value.substring(0, selectionStart) + 
+               prefix + placeholder + suffix + 
+               value.substring(selectionStart);
+      newCursorPos = selectionStart + prefix.length + placeholder.length;
+    }
+    
+    onChange(newText);
+    
+    // Restore cursor position
+    setTimeout(() => {
+      textarea.focus();
+      if (selectedText) {
+        textarea.setSelectionRange(newCursorPos, newCursorPos);
+      } else {
+        textarea.setSelectionRange(selectionStart + prefix.length, newCursorPos - suffix.length);
+      }
+    }, 0);
   };
 
   const handleTextSelection = () => {
@@ -137,6 +325,9 @@ export default function RichTextEditor({
           <Heart size={12} />
           <span>Select text to tag stress levels for catharsis</span>
         </div>
+        <div className="formatting-hints">
+          <span className="hint">Shortcuts: Ctrl+B/I/U • "- " for bullets • "1. " for numbers • Tab to indent</span>
+        </div>
       </div>
       <textarea
         ref={editorRef}
@@ -144,7 +335,15 @@ export default function RichTextEditor({
         onChange={handleInput}
         onKeyDown={handleKeyDown}
         onMouseUp={handleTextSelection}
-        placeholder={placeholder}
+        placeholder={`${placeholder}
+
+Try these formatting options:
+- Bullet points (- + space)
+- 1. Numbered lists (1. + space)
+- **Bold** (Ctrl+B)
+- *Italic* (Ctrl+I)  
+- _Underline_ (Ctrl+U)
+- Use Tab to indent nested items`}
         className="rich-text-input"
         data-testid={testId}
       />
