@@ -7,6 +7,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   readOnly?: boolean;
   'data-testid'?: string;
+  'data-entry-id'?: string;
 }
 
 export default function RichTextEditor({ 
@@ -14,17 +15,19 @@ export default function RichTextEditor({
   onChange, 
   placeholder, 
   readOnly, 
-  'data-testid': testId 
+  'data-testid': testId,
+  'data-entry-id': entryId
 }: RichTextEditorProps) {
-  const editorRef = useRef<HTMLTextAreaElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   const { playSound } = useMacSounds();
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     playSound('type');
-    onChange(e.target.value);
+    const text = (e.target as HTMLDivElement).textContent || '';
+    onChange(text);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Tab') {
       playSound('type');
     }
@@ -43,6 +46,26 @@ export default function RichTextEditor({
       .replace(/\n/g, '<br>');
   };
 
+  useEffect(() => {
+    if (editorRef.current && entryId) {
+      // Initialize stress relief system on this editor
+      const stressSystem = (window as any).stressReliefInstance;
+      if (stressSystem) {
+        editorRef.current.setAttribute('data-entry-id', entryId);
+        stressSystem.srInitEditor(editorRef.current);
+      }
+    }
+  }, [entryId]);
+
+  useEffect(() => {
+    if (editorRef.current && value && !readOnly) {
+      // Update content while preserving stress relief highlights
+      if ((editorRef.current.textContent || '') !== value) {
+        editorRef.current.textContent = value;
+      }
+    }
+  }, [value, readOnly]);
+
   if (readOnly) {
     return (
       <div 
@@ -54,15 +77,22 @@ export default function RichTextEditor({
   }
 
   return (
-    <textarea
+    <div
       ref={editorRef}
       className="mac-textarea flex-1 min-h-[150px]"
-      value={value}
-      onChange={handleInput}
+      contentEditable={!readOnly}
+      onInput={handleInput}
       onKeyDown={handleKeyDown}
-      placeholder={placeholder}
-      readOnly={readOnly}
       data-testid={testId}
-    />
+      data-editor="true"
+      data-entry-id={entryId}
+      style={{ 
+        whiteSpace: 'pre-wrap',
+        outline: 'none'
+      }}
+      suppressContentEditableWarning={true}
+    >
+      {value}
+    </div>
   );
 }
