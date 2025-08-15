@@ -5,6 +5,20 @@ import { insertJournalEntrySchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Search journal entries (must come before specific ID route)
+  app.get("/api/journal-entries/search", async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      if (!query) {
+        return res.status(400).json({ message: "Search query is required" });
+      }
+      const entries = await storage.searchJournalEntries(query);
+      res.json(entries);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to search journal entries" });
+    }
+  });
+
   // Get all journal entries
   app.get("/api/journal-entries", async (req, res) => {
     try {
@@ -72,15 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search journal entries
-  app.get("/api/journal-entries/search/:query", async (req, res) => {
-    try {
-      const entries = await storage.searchJournalEntries(req.params.query);
-      res.json(entries);
-    } catch (error) {
-      res.status(500).json({ message: "Failed to search journal entries" });
-    }
-  });
+
 
   const httpServer = createServer(app);
   return httpServer;

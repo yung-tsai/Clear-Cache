@@ -22,7 +22,7 @@ export const journalEntries = pgTable("journal_entries", {
   journalDate: text("journal_date").notNull(), // user-selected date for the entry (YYYY-MM-DD format)
   voiceMemo: text("voice_memo"), // base64 encoded audio data
   voiceMemos: text("voice_memos").array().default([]).notNull(), // array of voice memo objects as JSON strings
-  catharsis: text("catharsis", { mode: 'json' }).$type<CatharsisItem[]>(), // cathartic emotional releases
+  catharsis: text("catharsis").$type<CatharsisItem[]>().default('[]'), // cathartic emotional releases
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -39,6 +39,13 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries).pick(
   voiceMemo: true,
   voiceMemos: true,
   catharsis: true,
+}).extend({
+  catharsis: z.array(z.object({
+    id: z.string(),
+    text: z.string(),
+    stressLevel: z.enum(['angry', 'sad', 'anxious']),
+    createdAt: z.string(),
+  })).optional(),
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
