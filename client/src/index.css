@@ -532,6 +532,106 @@
     linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4682B4 100%);
 }
 
+/* Classic Mac Screensaver Backgrounds */
+.background-toasters {
+  background: linear-gradient(45deg, #000033 0%, #000066 100%);
+  animation: flyingToasters 20s infinite linear;
+  position: relative;
+  overflow: hidden;
+}
+
+.background-toasters::before {
+  content: '🍞';
+  position: absolute;
+  font-size: 24px;
+  animation: toasterFly 15s infinite linear;
+  opacity: 0.8;
+}
+
+.background-toasters::after {
+  content: '🍞 🍞 🍞';
+  position: absolute;
+  font-size: 18px;
+  animation: toasterFly 20s infinite linear reverse;
+  opacity: 0.6;
+  animation-delay: -10s;
+}
+
+@keyframes toasterFly {
+  0% { left: -100px; top: 20%; transform: rotate(0deg); }
+  25% { top: 60%; transform: rotate(90deg); }
+  50% { top: 30%; transform: rotate(180deg); }
+  75% { top: 70%; transform: rotate(270deg); }
+  100% { left: 100%; top: 20%; transform: rotate(360deg); }
+}
+
+.background-starfield {
+  background: radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+              radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
+              radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+              radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.6), transparent),
+              radial-gradient(2px 2px at 160px 30px, #fff, transparent),
+              #000;
+  background-repeat: repeat;
+  background-size: 200px 100px;
+  animation: starMove 30s linear infinite;
+}
+
+@keyframes starMove {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 200px 100px, -200px 50px, 100px -100px, -100px 80px, 150px -50px; }
+}
+
+.background-maze {
+  background: 
+    linear-gradient(90deg, #666 1px, transparent 1px),
+    linear-gradient(180deg, #666 1px, transparent 1px),
+    linear-gradient(90deg, #333 50%, #111 50%),
+    #000;
+  background-size: 20px 20px, 20px 20px, 40px 40px, 40px 40px;
+  animation: mazeShift 25s infinite linear;
+}
+
+@keyframes mazeShift {
+  0% { background-position: 0 0, 0 0, 0 0; }
+  100% { background-position: 20px 20px, 20px 20px, 40px 40px; }
+}
+
+.background-bubbles {
+  background: linear-gradient(180deg, #4FC3F7 0%, #29B6F6 50%, #0288D1 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.background-bubbles::before,
+.background-bubbles::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  animation: bubble 20s infinite linear;
+}
+
+.background-bubbles::before {
+  width: 30px;
+  height: 30px;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.background-bubbles::after {
+  width: 20px;
+  height: 20px;
+  left: 70%;
+  animation-delay: -10s;
+}
+
+@keyframes bubble {
+  0% { bottom: -50px; opacity: 0; transform: scale(0.5); }
+  50% { opacity: 1; transform: scale(1); }
+  100% { bottom: 100%; opacity: 0; transform: scale(0.5); }
+}
+
 /* Sound Toggle */
 .sound-toggle {
   margin-left: auto;

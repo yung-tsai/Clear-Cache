@@ -50,8 +50,8 @@ export default function TrashIcon({ onDrop, draggedEntry, 'data-testid': testId 
     const entryId = e.dataTransfer.getData('text/plain') || draggedEntry;
     if (entryId) {
       if (confirm('Delete this journal entry permanently?')) {
+        playSound('trash');
         await deleteMutation.mutate(entryId);
-        playSound('click');
         onDrop();
       }
     }

@@ -62,3 +62,6 @@ Preferred communication style: Simple, everyday language.
 - Updated classic Mac background to solid light gray (#e0e0e0) per user preference
 - Improved window sizing: new journal entries now open with 700x500 dimensions for better visibility
 - Centered main MacJournal window on app startup for better initial positioning
+- Enhanced sound system with authentic Mac effects: window open/close, trash sound, menu dropdown, success chimes, and alert beeps
+- Added classic Mac screensaver backgrounds: Flying Toasters, Starfield, Maze, and Aqua Bubbles with animated CSS effects
+- Implemented smooth window animations for opening and closing windows with proper Mac-style transitions

@@ -44,7 +44,7 @@ export default function MacWindow({
   const handleClose = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    playSound('click');
+    playSound('windowClose');
     onClose();
   };
 

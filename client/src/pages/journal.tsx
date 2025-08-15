@@ -55,7 +55,7 @@ export default function Journal() {
   });
 
   function handleNewEntry() {
-    playSound('click');
+    playSound('windowOpen');
     const windowId = `entry-${Date.now()}`;
     const newWindow = {
       id: windowId,

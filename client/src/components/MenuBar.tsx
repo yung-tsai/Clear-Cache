@@ -40,24 +40,31 @@ export default function MenuBar({
   }, []);
 
   const handleFileMenuClick = () => {
+    playSound('menuDrop');
     setActiveMenu(activeMenu === 'file' ? null : 'file');
   };
 
   const handleViewMenuClick = () => {
+    playSound('menuDrop');
     setActiveMenu(activeMenu === 'view' ? null : 'view');
   };
 
   const handleSpecialMenuClick = () => {
+    playSound('menuDrop');
     setActiveMenu(activeMenu === 'special' ? null : 'special');
   };
 
   const backgrounds = [
-    { name: 'Classic Mac', value: 'classic', description: 'Traditional gray pattern' },
+    { name: 'Classic Mac', value: 'classic', description: 'Traditional gray desktop' },
     { name: 'Blue Sky', value: 'blue-sky', description: 'Peaceful blue gradient' },
     { name: 'Forest Green', value: 'forest', description: 'Calming green tones' },
     { name: 'Sunset Orange', value: 'sunset', description: 'Warm orange gradient' },
     { name: 'Deep Purple', value: 'purple', description: 'Rich purple tones' },
-    { name: 'Ocean Waves', value: 'ocean', description: 'Blue wave pattern' }
+    { name: 'Ocean Waves', value: 'ocean', description: 'Blue wave pattern' },
+    { name: 'Flying Toasters', value: 'toasters', description: 'Classic Mac screensaver' },
+    { name: 'Starfield', value: 'starfield', description: 'Moving stars screensaver' },
+    { name: 'Maze', value: 'maze', description: 'Classic 3D maze screensaver' },
+    { name: 'Aqua Bubbles', value: 'bubbles', description: 'Floating bubbles screensaver' }
   ];
 
   return (

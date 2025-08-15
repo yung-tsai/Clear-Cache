@@ -50,6 +50,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     },
     onSuccess: (newEntry) => {
       queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
+      playSound('success');
       setSaveStatus("Entry Saved!");
       setTimeout(() => setSaveStatus(""), 2000);
       
@@ -73,6 +74,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
+      playSound('success');
       setSaveStatus("Entry Updated!");
       setTimeout(() => setSaveStatus(""), 2000);
       onSave?.();
