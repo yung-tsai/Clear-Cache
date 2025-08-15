@@ -9,6 +9,7 @@ import DesktopWeatherWidget from "@/components/DesktopWeatherWidget";
 import DesktopClock from "@/components/DesktopClock";
 
 import TrashIcon from "@/components/TrashIcon";
+import CatharsisFolder from "@/components/CatharsisFolder";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
@@ -250,6 +251,8 @@ export default function Journal() {
           draggedEntry={draggedEntry}
           data-testid="trash-icon"
         />
+        
+        <CatharsisFolder onPlaySound={playSound} />
       </div>
     </div>
   );
