@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useMacSounds } from "@/hooks/useMacSounds";
 
 interface MenuBarProps {
   onNewEntry: () => void;
@@ -25,6 +26,7 @@ export default function MenuBar({
   const fileMenuRef = useRef<HTMLDivElement>(null);
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const specialMenuRef = useRef<HTMLDivElement>(null);
+  const { playSound } = useMacSounds();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
