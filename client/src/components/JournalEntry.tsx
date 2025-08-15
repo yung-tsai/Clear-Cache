@@ -7,10 +7,8 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
 import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2 } from "lucide-react";
+
 import { AutoTagger } from "@/components/AutoTagger";
-import { StressReliefSystem } from "@/components/StressRelief/StressReliefSystem";
-import StressInbox from "@/components/StressRelief/StressInbox";
-import ProcessScreen from "@/components/StressRelief/ProcessScreen";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -30,43 +28,13 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
-  const [showStressInbox, setShowStressInbox] = useState(false);
-  const [showProcessScreen, setShowProcessScreen] = useState(false);
-  const [stressMode, setStressMode] = useState<'compose' | 'process'>('compose');
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
-  const editorRef = useRef<HTMLDivElement>(null);
-  const stressSystemRef = useRef<StressReliefSystem | null>(null);
 
   // Update currentEntryId when entryId prop changes
   useEffect(() => {
     setCurrentEntryId(entryId);
   }, [entryId]);
-
-  // Initialize Stress Relief System
-  useEffect(() => {
-    if (editorRef.current && !stressSystemRef.current) {
-      stressSystemRef.current = new StressReliefSystem();
-      
-      // Set entry ID on the editor
-      if (currentEntryId) {
-        editorRef.current.setAttribute('data-entry-id', currentEntryId);
-      }
-      
-      // Initialize the editor with stress relief
-      stressSystemRef.current.srInitEditor(editorRef.current);
-      
-      // Store global reference for other components
-      (window as any).stressReliefInstance = stressSystemRef.current;
-    }
-  }, [currentEntryId]);
-
-  // Update editor entry ID when currentEntryId changes
-  useEffect(() => {
-    if (editorRef.current && currentEntryId) {
-      editorRef.current.setAttribute('data-entry-id', currentEntryId);
-    }
-  }, [currentEntryId]);
 
   // Fetch existing entry if entryId is provided
   const { data: entry, isLoading } = useQuery<JournalEntryType>({
@@ -322,40 +290,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Compose/Process Mode Toggle */}
-      <div className="flex items-center justify-center mb-3 pb-2 border-b border-gray-400">
-        <button
-          type="button"
-          className={`mac-button px-4 py-1 mr-1 ${stressMode === 'compose' ? 'bg-black text-white' : ''}`}
-          onClick={() => setStressMode('compose')}
-          data-testid="mode-compose"
-        >
-          Compose
-        </button>
-        <span className="mx-2 text-gray-600">|</span>
-        <button
-          type="button"
-          className={`mac-button px-4 py-1 ml-1 ${stressMode === 'process' ? 'bg-black text-white' : ''}`}
-          onClick={() => setStressMode('process')}
-          data-testid="mode-process"
-        >
-          Process
-        </button>
-        
-        {/* Show stress inbox toggle */}
-        <button
-          type="button"
-          className="mac-button ml-4 text-xs"
-          onClick={() => setShowStressInbox(true)}
-          data-testid="show-stress-inbox"
-        >
-          📥 Stress Inbox
-        </button>
-      </div>
-
-      <form className="flex flex-col h-full gap-2" onSubmit={handleSubmit}>
-        <div className="flex items-center gap-2">
+    <form className="flex flex-col h-full gap-2" onSubmit={handleSubmit}>
+      <div className="flex items-center gap-2">
         <label className="min-w-[40px] font-bold text-xs">Title:</label>
         <input
           type="text"
@@ -475,7 +411,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         placeholder="Start writing your journal entry..."
         readOnly={readOnly}
         data-testid="textarea-content"
-        data-entry-id={currentEntryId}
       />
       
       <div className="flex justify-between items-center border-t border-gray-400 pt-2">
@@ -542,22 +477,5 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         )}
       </div>
     </form>
-
-    {/* Stress Relief Components */}
-    {showStressInbox && (
-      <StressInbox onClose={() => setShowStressInbox(false)} />
-    )}
-    
-    {showProcessScreen && (
-      <ProcessScreen 
-        onClose={() => setShowProcessScreen(false)}
-        onComplete={() => {
-          setShowProcessScreen(false);
-          // Play completion chime
-          playSound('success');
-        }}
-      />
-    )}
-    </div>
   );
 }
