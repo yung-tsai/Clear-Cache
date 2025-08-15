@@ -51,11 +51,22 @@ export class AutoTagger {
     words.forEach(word => {
       if (!commonWords.includes(word) && word.length > 4) {
         // Check if this might be a place name or proper noun (capitalized in original)
-        const originalText = content + ' ' + title;
-        const regex = new RegExp(`\\b${word}\\b`, 'i');
-        const match = originalText.match(regex);
-        if (match && match[0][0] === match[0][0].toUpperCase()) {
-          suggestedTags.add(word.toLowerCase());
+        // First clean the text of any markup to avoid regex issues
+        const cleanText = (content + ' ' + title)
+          .replace(/\[stress-[^\]]+\]/g, '') // Remove stress markup
+          .replace(/\[\/stress-[^\]]+\]/g, '') // Remove closing stress markup
+          .replace(/\[highlight-[^\]]+\]/g, '') // Remove highlight markup
+          .replace(/\[\/highlight-[^\]]+\]/g, ''); // Remove closing highlight markup
+        
+        try {
+          const regex = new RegExp(`\\b${word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+          const match = cleanText.match(regex);
+          if (match && match[0][0] === match[0][0].toUpperCase()) {
+            suggestedTags.add(word.toLowerCase());
+          }
+        } catch (e) {
+          // Skip words that can't form valid regex patterns
+          return;
         }
       }
     });

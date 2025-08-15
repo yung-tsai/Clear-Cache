@@ -55,9 +55,9 @@ export default function StressLevelPopover({
       ref={popoverRef}
       className="stress-popover"
       style={{
-        position: 'absolute',
-        left: position.x,
-        top: position.y + 10,
+        position: 'fixed',
+        left: Math.max(10, Math.min(position.x, window.innerWidth - 300)),
+        top: Math.max(10, position.y - 120),
         zIndex: 1000
       }}
       data-testid="stress-level-popover"

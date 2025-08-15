@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Catharsis Feature</title>
+</head>
+<body>
+    <h1>Test Instructions for Catharsis Feature</h1>
+    
+    <h2>Steps to Test:</h2>
+    <ol>
+        <li><strong>Create a new journal entry</strong>
+            <ul>
+                <li>Click "New Entry" button</li>
+                <li>Add a title like "Stressful Day at Work"</li>
+            </ul>
+        </li>
+        
+        <li><strong>Write some test content with negative emotions:</strong>
+            <div style="background: #f5f5f5; padding: 10px; margin: 10px 0; border-left: 4px solid #007acc;">
+                "Today was absolutely terrible. My boss was being completely unreasonable about the deadline. I'm feeling so overwhelmed and anxious about everything. The traffic was awful this morning and made me really angry. I just feel sad that things keep going wrong."
+            </div>
+        </li>
+        
+        <li><strong>Test the catharsis feature:</strong>
+            <ul>
+                <li>Select the word "terrible" - popover should appear above it</li>
+                <li>Choose "Angry" stress level</li>
+                <li>Select "overwhelmed and anxious" - choose "Anxious"</li>
+                <li>Select "really angry" - choose "Angry"</li>
+                <li>Select "feel sad" - choose "Sad"</li>
+            </ul>
+        </li>
+        
+        <li><strong>Open Catharsis Window:</strong>
+            <ul>
+                <li>Click the heart button in toolbar (should show count like "Catharsis (4)")</li>
+                <li>Window should open showing all tagged stress items</li>
+            </ul>
+        </li>
+        
+        <li><strong>Test therapeutic disposal:</strong>
+            <ul>
+                <li>Try dragging an item to the trash icon</li>
+                <li>Try clicking "Shred" button on an item</li>
+                <li>Should hear appropriate Mac sounds</li>
+                <li>Items should disappear from the list</li>
+                <li>Count in toolbar should update</li>
+            </ul>
+        </li>
+        
+        <li><strong>Save the entry</strong>
+            <ul>
+                <li>Click "Save Entry"</li>
+                <li>Remaining catharsis items should be saved with the entry</li>
+            </ul>
+        </li>
+    </ol>
+    
+    <h2>Expected Behavior:</h2>
+    <ul>
+        <li>✓ No regex errors when selecting text</li>
+        <li>✓ Stress level popover appears above selected text</li>
+        <li>✓ Text gets highlighted with appropriate stress colors</li>
+        <li>✓ Catharsis window shows all tagged items</li>
+        <li>✓ Drag and drop to trash works</li>
+        <li>✓ Shredding with sound effects works</li>
+        <li>✓ Item count updates correctly</li>
+        <li>✓ Entry saves with catharsis data</li>
+    </ul>
+</body>
+</html>

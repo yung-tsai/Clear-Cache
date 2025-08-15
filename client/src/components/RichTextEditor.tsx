@@ -55,9 +55,12 @@ export default function RichTextEditor({
         const rect = editorRef.current.getBoundingClientRect();
         setSelectedText(selectedText);
         setSelectionRange({ start: range, end: endRange });
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+        
         setPopoverPosition({
-          x: rect.left + 20,
-          y: rect.top - 10
+          x: rect.left + scrollLeft + 20,
+          y: rect.top + scrollTop - 10
         });
         setShowStressPopover(true);
       }
