@@ -3,6 +3,13 @@ import { pgTable, text, varchar, timestamp, integer } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export interface CatharsisItem {
+  id: string;
+  text: string;
+  stressLevel: 'angry' | 'sad' | 'anxious';
+  createdAt: string;
+}
+
 export const journalEntries = pgTable("journal_entries", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   title: text("title").notNull(),
@@ -15,6 +22,7 @@ export const journalEntries = pgTable("journal_entries", {
   journalDate: text("journal_date").notNull(), // user-selected date for the entry (YYYY-MM-DD format)
   voiceMemo: text("voice_memo"), // base64 encoded audio data
   voiceMemos: text("voice_memos").array().default([]).notNull(), // array of voice memo objects as JSON strings
+  catharsis: text("catharsis", { mode: 'json' }).$type<CatharsisItem[]>(), // cathartic emotional releases
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -30,6 +38,7 @@ export const insertJournalEntrySchema = createInsertSchema(journalEntries).pick(
   journalDate: true,
   voiceMemo: true,
   voiceMemos: true,
+  catharsis: true,
 });
 
 export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;

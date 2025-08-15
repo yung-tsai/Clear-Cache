@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import type { JournalEntry as JournalEntryType, InsertJournalEntry } from "@shared/schema";
+import type { JournalEntry as JournalEntryType, InsertJournalEntry, CatharsisItem } from "@shared/schema";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditor from "@/components/RichTextEditor";
 import MoodSelector from "@/components/MoodSelector";
-import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2 } from "lucide-react";
+import CatharsisWindow from "@/components/CatharsisWindow";
+import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2, Heart } from "lucide-react";
 
 import { AutoTagger } from "@/components/AutoTagger";
 
@@ -28,6 +29,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
+  const [catharsisItems, setCatharsisItems] = useState<CatharsisItem[]>([]);
+  const [showCatharsisWindow, setShowCatharsisWindow] = useState(false);
   const queryClient = useQueryClient();
   const { playSound } = useMacSounds();
 
@@ -88,6 +91,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
       setJournalDate(entry.journalDate);
+      setCatharsisItems(entry.catharsis || []);
     } else {
       // For new entries, set today's date
       setJournalDate(new Date().toISOString().split('T')[0]);
@@ -209,6 +213,22 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     } : undefined
   });
 
+  const handleCatharsisUpdate = (items: CatharsisItem[]) => {
+    setCatharsisItems(items);
+  };
+
+  const handleCatharsisItemShredded = (itemId: string) => {
+    const updatedItems = catharsisItems.filter(item => item.id !== itemId);
+    setCatharsisItems(updatedItems);
+    playSound('success');
+  };
+
+  const handleCatharsisItemTrashed = (itemId: string) => {
+    const updatedItems = catharsisItems.filter(item => item.id !== itemId);
+    setCatharsisItems(updatedItems);
+    playSound('trash');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     playSound('click');
@@ -218,7 +238,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       content,
       tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
       mood,
-      journalDate
+      journalDate,
+      catharsis: catharsisItems
     };
 
     if (currentEntryId) {
@@ -402,12 +423,25 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
               data-testid="color-blue"
             />
           </div>
+          
+          <button
+            type="button"
+            className="mac-toolbar-btn catharsis-btn"
+            onClick={() => setShowCatharsisWindow(true)}
+            title="Open Catharsis Window"
+            data-testid="button-catharsis"
+          >
+            <Heart size={14} />
+            Catharsis ({catharsisItems.length})
+          </button>
         </div>
       )}
       
       <RichTextEditor
         value={content}
         onChange={setContent}
+        onCatharsisUpdate={handleCatharsisUpdate}
+        catharsisItems={catharsisItems}
         placeholder="Start writing your journal entry..."
         readOnly={readOnly}
         data-testid="textarea-content"
@@ -476,6 +510,15 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           </div>
         )}
       </div>
+      
+      {showCatharsisWindow && (
+        <CatharsisWindow
+          catharsisItems={catharsisItems}
+          onItemShredded={handleCatharsisItemShredded}
+          onItemTrashed={handleCatharsisItemTrashed}
+          onClose={() => setShowCatharsisWindow(false)}
+        />
+      )}
     </form>
   );
 }

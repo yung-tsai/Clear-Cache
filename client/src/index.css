@@ -632,6 +632,343 @@
   100% { bottom: 100%; opacity: 0; transform: scale(0.5); }
 }
 
+/* Catharsis Styles */
+.catharsis-window {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 400px;
+  background: #d0d0d0;
+  border: 1px solid #000;
+  box-shadow: 
+    1px 1px 0 #000,
+    2px 2px 0 #808080,
+    3px 3px 0 #808080;
+  z-index: 1000;
+  animation: windowFadeIn 0.3s ease-out;
+}
+
+.catharsis-content {
+  padding: 8px;
+  height: calc(100% - 40px);
+  display: flex;
+  flex-direction: column;
+}
+
+.catharsis-header {
+  margin-bottom: 8px;
+}
+
+.catharsis-instructions {
+  font-size: 9px;
+  margin: 0;
+  color: #333;
+}
+
+.catharsis-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: #666;
+  font-size: 9px;
+  text-align: center;
+}
+
+.catharsis-list {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 8px;
+}
+
+.catharsis-item {
+  background: #fff;
+  border: 1px solid #000;
+  margin-bottom: 4px;
+  padding: 6px;
+  cursor: grab;
+  position: relative;
+  font-size: 9px;
+}
+
+.catharsis-item.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.catharsis-item.shredding {
+  animation: itemShredding 3s ease-in-out;
+}
+
+.catharsis-item-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.stress-emoji {
+  font-size: 12px;
+}
+
+.stress-level {
+  font-weight: bold;
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.shred-btn {
+  margin-left: auto;
+  padding: 2px 4px;
+  border: 1px solid #000;
+  background: #f0f0f0;
+  cursor: pointer;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.shred-btn:hover {
+  background: #ddd;
+}
+
+.catharsis-text {
+  color: #333;
+  line-height: 1.2;
+}
+
+.catharsis-footer {
+  border-top: 1px solid #000;
+  padding-top: 8px;
+}
+
+.trash-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border: 2px dashed #666;
+  background: #f5f5f5;
+  cursor: pointer;
+  font-size: 9px;
+  color: #666;
+}
+
+.trash-zone:hover {
+  background: #eee;
+  border-color: #333;
+}
+
+.shredder-animation {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.shredder-lines {
+  width: 100%;
+  height: 20px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 2px,
+    #000 2px,
+    #000 3px
+  );
+  animation: shredderMove 0.5s infinite;
+}
+
+.shredder-text {
+  font-size: 8px;
+  font-weight: bold;
+  color: #ff0000;
+  margin-top: 4px;
+  animation: pulse 0.5s infinite;
+}
+
+@keyframes itemShredding {
+  0% { transform: none; }
+  25% { transform: translateY(-2px) rotate(1deg); }
+  50% { transform: translateY(2px) rotate(-1deg); }
+  75% { transform: translateY(-1px) rotate(0.5deg); }
+  100% { transform: none; opacity: 0; }
+}
+
+@keyframes shredderMove {
+  0% { transform: translateX(-5px); }
+  100% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.shred-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+}
+
+.shred-confirm-modal {
+  background: #d0d0d0;
+  border: 1px solid #000;
+  padding: 16px;
+  min-width: 250px;
+  text-align: center;
+  font-size: 9px;
+}
+
+.shred-confirm-modal h3 {
+  margin: 0 0 8px 0;
+  font-size: 11px;
+}
+
+.shred-confirm-modal p {
+  margin: 0 0 12px 0;
+  color: #666;
+}
+
+.shred-confirm-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.confirm-shred {
+  background: #ff4444 !important;
+  color: white !important;
+}
+
+.cancel-shred {
+  background: #ccc !important;
+}
+
+/* Stress Level Popover */
+.stress-popover {
+  background: #d0d0d0;
+  border: 1px solid #000;
+  box-shadow: 2px 2px 0 #808080;
+  padding: 8px;
+  min-width: 200px;
+  z-index: 1000;
+  font-size: 9px;
+}
+
+.stress-popover-header {
+  margin-bottom: 8px;
+}
+
+.selected-text {
+  font-style: italic;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.stress-question {
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.stress-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.stress-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border: 1px solid #000;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+}
+
+.stress-option:hover {
+  background: #f0f0f0;
+}
+
+.stress-popover-footer {
+  text-align: center;
+}
+
+/* Rich Text Editor Enhancements */
+.rich-text-editor {
+  position: relative;
+}
+
+.editor-header {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 8px;
+}
+
+.catharsis-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #666;
+}
+
+.rich-text-input {
+  width: 100%;
+  min-height: 150px;
+  border: 1px solid #000;
+  padding: 8px;
+  font-family: inherit;
+  font-size: inherit;
+  resize: vertical;
+  outline: none;
+  background: #fff;
+}
+
+/* Stress Highlights */
+.stress-highlight {
+  padding: 1px 2px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
+.stress-angry {
+  background: rgba(255, 68, 68, 0.3);
+  border-left: 2px solid #ff4444;
+}
+
+.stress-sad {
+  background: rgba(68, 68, 255, 0.3);
+  border-left: 2px solid #4444ff;
+}
+
+.stress-anxious {
+  background: rgba(255, 170, 0, 0.3);
+  border-left: 2px solid #ffaa00;
+}
+
 /* Sound Toggle */
 .sound-toggle {
   margin-left: auto;
