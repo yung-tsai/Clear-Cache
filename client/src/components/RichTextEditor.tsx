@@ -189,6 +189,20 @@ export default function RichTextEditor({
         }, 0);
         return;
       }
+      
+      // Auto-heading: "# " -> H1, "## " -> H2, "### " -> H3
+      const headingPattern = /^(#{1,3})$/;
+      if (headingPattern.test(lineContent)) {
+        e.preventDefault();
+        const newValue = currentValue.substring(0, lineStart) + 
+                        lineContent + ' ' + 
+                        currentValue.substring(selectionStart);
+        onChange(newValue);
+        setTimeout(() => {
+          textarea.setSelectionRange(selectionStart + 1, selectionStart + 1);
+        }, 0);
+        return;
+      }
     }
   };
 
@@ -295,13 +309,12 @@ export default function RichTextEditor({
   // Convert markdown-like syntax to HTML for display
   const convertToHtml = (text: string) => {
     return text
+      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/_(.*?)_/g, '<u>$1</u>')
-      .replace(/\[highlight-yellow\](.*?)\[\/highlight-yellow\]/g, '<span class="highlight-yellow">$1</span>')
-      .replace(/\[highlight-pink\](.*?)\[\/highlight-pink\]/g, '<span class="highlight-pink">$1</span>')
-      .replace(/\[highlight-green\](.*?)\[\/highlight-green\]/g, '<span class="highlight-green">$1</span>')
-      .replace(/\[highlight-blue\](.*?)\[\/highlight-blue\]/g, '<span class="highlight-blue">$1</span>')
       .replace(/\[stress-angry\](.*?)\[\/stress-angry\]/g, '<span class="stress-highlight stress-angry">$1</span>')
       .replace(/\[stress-sad\](.*?)\[\/stress-sad\]/g, '<span class="stress-highlight stress-sad">$1</span>')
       .replace(/\[stress-anxious\](.*?)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>')
@@ -326,7 +339,7 @@ export default function RichTextEditor({
           <span>Select text to tag stress levels for catharsis</span>
         </div>
         <div className="formatting-hints">
-          <span className="hint">Shortcuts: Ctrl+B/I/U • "- " for bullets • "1. " for numbers • Tab to indent</span>
+          <span className="hint">Shortcuts: Ctrl+B/I/U • "- " for bullets • "1. " for numbers • "#/#/###" for headings • Tab to indent</span>
         </div>
       </div>
       <textarea
@@ -340,6 +353,7 @@ export default function RichTextEditor({
 Try these formatting options:
 - Bullet points (- + space)
 - 1. Numbered lists (1. + space)
+- # Headings (# + space for H1, ## for H2, ### for H3)
 - **Bold** (Ctrl+B)
 - *Italic* (Ctrl+I)  
 - _Underline_ (Ctrl+U)

@@ -284,27 +284,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
-  const highlightText = (color: string) => {
-    playSound('click');
-    const textarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
-      
-      if (selectedText) {
-        const highlightedText = `[highlight-${color}]${selectedText}[/highlight-${color}]`;
-        const newContent = content.substring(0, start) + highlightedText + content.substring(end);
-        setContent(newContent);
-        
-        // Reset cursor position
-        setTimeout(() => {
-          textarea.focus();
-          textarea.setSelectionRange(start + highlightedText.length, start + highlightedText.length);
-        }, 0);
-      }
-    }
-  };
+
 
   if (isLoading) {
     return <div className="p-4">Loading...</div>;
@@ -360,13 +340,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         )}
       </div>
       
-      {/* Mood Section */}
-      <div className="mb-2">
-        <MoodSelector 
-          selectedMood={mood}
-          onMoodChange={setMood}
-        />
-      </div>
+
 
 
       
@@ -395,44 +369,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
             data-testid="button-underline"
           >
             <u>U</u>
-          </button>
-          
-          <div className="color-picker">
-            <div
-              className="color-swatch highlight-yellow"
-              onClick={() => highlightText('yellow')}
-              title="Yellow"
-              data-testid="color-yellow"
-            />
-            <div
-              className="color-swatch highlight-pink"
-              onClick={() => highlightText('pink')}
-              title="Pink"
-              data-testid="color-pink"
-            />
-            <div
-              className="color-swatch highlight-green"
-              onClick={() => highlightText('green')}
-              title="Green"
-              data-testid="color-green"
-            />
-            <div
-              className="color-swatch highlight-blue"
-              onClick={() => highlightText('blue')}
-              title="Blue"
-              data-testid="color-blue"
-            />
-          </div>
-          
-          <button
-            type="button"
-            className="mac-toolbar-btn catharsis-btn"
-            onClick={() => setShowCatharsisWindow(true)}
-            title="Open Catharsis Window"
-            data-testid="button-catharsis"
-          >
-            <Heart size={14} />
-            Catharsis ({catharsisItems.length})
           </button>
         </div>
       )}
@@ -470,6 +406,45 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
               </span>
             ))}
           </div>
+        </div>
+        
+        <div className="flex items-center gap-4">
+          {/* Mood Selector */}
+          <div className="flex items-center gap-2">
+            <label className="text-xs font-bold">Mood:</label>
+            <select
+              className="mac-input text-xs"
+              value={mood || ''}
+              onChange={(e) => setMood(e.target.value || null)}
+              disabled={readOnly}
+              data-testid="select-mood"
+              style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '100px' }}
+            >
+              <option value="">None</option>
+              <option value="happy">😊 Happy</option>
+              <option value="sad">😢 Sad</option>
+              <option value="excited">🤩 Excited</option>
+              <option value="calm">😌 Calm</option>
+              <option value="anxious">😰 Anxious</option>
+              <option value="grateful">🙏 Grateful</option>
+              <option value="angry">😠 Angry</option>
+              <option value="peaceful">🕊️ Peaceful</option>
+            </select>
+          </div>
+          
+          {/* Catharsis Button */}
+          {!readOnly && (
+            <button
+              type="button"
+              className="mac-button catharsis-btn"
+              onClick={() => setShowCatharsisWindow(true)}
+              title="Open Catharsis Window"
+              data-testid="button-catharsis"
+            >
+              <Heart size={14} />
+              Catharsis ({catharsisItems.length})
+            </button>
+          )}
         </div>
         
         {!readOnly && (

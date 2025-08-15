@@ -1015,6 +1015,27 @@
   tab-size: 2;
 }
 
+/* Rich text heading styles for read-only view */
+.rich-text-editor h1 {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 8px 0 4px 0;
+  border-bottom: 2px solid #000;
+}
+
+.rich-text-editor h2 {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 6px 0 3px 0;
+  border-bottom: 1px solid #000;
+}
+
+.rich-text-editor h3 {
+  font-size: 14px;
+  font-weight: bold;
+  margin: 4px 0 2px 0;
+}
+
 .rich-text-editor .bold {
   font-weight: bold;
 }
