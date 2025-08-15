@@ -64,7 +64,7 @@ export default function Journal() {
       title: 'New Journal Entry',
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
-      size: { width: 700, height: 500 },
+      size: { width: 700, height: 600 },
       zIndex: nextZIndex
     };
     setWindows(prev => [...prev, newWindow]);

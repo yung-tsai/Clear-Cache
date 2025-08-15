@@ -28,28 +28,29 @@ export default function CatharsisFolder({ onPlaySound }: CatharsisFolderProps) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
-    setDragState({
+    
+    const startDragState = {
       dragging: true,
       startX: e.clientX,
       startY: e.clientY,
       startPos: position
-    });
+    };
+    
+    setDragState(startDragState);
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!dragState.dragging) return;
-      
-      const deltaX = moveEvent.clientX - dragState.startX;
-      const deltaY = moveEvent.clientY - dragState.startY;
+      const deltaX = moveEvent.clientX - startDragState.startX;
+      const deltaY = moveEvent.clientY - startDragState.startY;
       
       setPosition({
-        x: Math.max(0, Math.min(window.innerWidth - 80, dragState.startPos.x + deltaX)),
-        y: Math.max(0, Math.min(window.innerHeight - 80, dragState.startPos.y + deltaY))
+        x: Math.max(0, Math.min(window.innerWidth - 80, startDragState.startPos.x + deltaX)),
+        y: Math.max(0, Math.min(window.innerHeight - 80, startDragState.startPos.y + deltaY))
       });
     };
 
     const handleMouseUp = () => {
       setDragState(prev => ({ ...prev, dragging: false }));
-      setIsDragging(false);
+      setTimeout(() => setIsDragging(false), 100); // Delay to prevent click from firing
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
