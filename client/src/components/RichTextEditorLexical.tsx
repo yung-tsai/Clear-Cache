@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useMemo, useEffect, useRef } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
@@ -17,14 +17,14 @@ import {
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
 
 type Props = {
-  value?: string;
+  initialHTML?: string;
   onChange?: (html: string) => void;
   placeholder?: string;
   readOnly?: boolean;
 };
 
 export default function RichTextEditorLexical({
-  value = "",
+  initialHTML = "",
   onChange,
   placeholder = "Start typing…",
   readOnly,
@@ -61,7 +61,7 @@ export default function RichTextEditorLexical({
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
-      <LoadInitialContent value={value} />
+      <LoadInitialOnce html={initialHTML} />
       <OnChangePlugin
         onChange={(editorState, editor) => {
           editorState.read(() => {
@@ -74,21 +74,30 @@ export default function RichTextEditorLexical({
   );
 }
 
-function LoadInitialContent({ value }: { value: string }) {
+function LoadInitialOnce({ html }: { html: string }) {
   const [editor] = useLexicalComposerContext();
+  const loadedRef = useRef(false);
 
   useEffect(() => {
-    if (!value) return;
-    
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+
+    if (!html) return;
+
     editor.update(() => {
       const parser = new DOMParser();
-      const dom = parser.parseFromString(value, "text/html");
+      const dom = parser.parseFromString(html, "text/html");
       const nodes = $generateNodesFromDOM(editor, dom);
       const root = $getRoot();
       root.clear();
-      root.append(...nodes);
+      // If import produced no blocks, ensure at least one paragraph
+      if (nodes.length === 0) {
+        root.append($createParagraphNode());
+      } else {
+        root.append(...nodes);
+      }
     });
-  }, [editor, value]);
+  }, [editor, html]);
 
   return null;
 }

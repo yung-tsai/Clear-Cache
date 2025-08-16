@@ -1,0 +1,142 @@
+1) Make the editor accept initialHTML and load it once
+
+RichTextEditorLexical.tsx (replace your component with this diff):
+
+Change prop name value → initialHTML
+
+Load it once with a loadedRef
+
+Keep onChange the same (still returns HTML)
+
+Remove any dependence on initialHTML in the effect deps
+
+// props
+type Props = {
+  initialHTML?: string;                // renamed
+  onChange?: (html: string) => void;
+  placeholder?: string;
+  readOnly?: boolean;
+};
+
+// usage
+export default function RichTextEditorLexical({
+  initialHTML = "",
+  onChange,
+  placeholder = "Start typing…",
+  readOnly,
+}: Props) {
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "retro-journal",
+      editable: !readOnly,
+      nodes: [HeadingNode],
+      theme: {
+        paragraph: "rte-p",
+        text: { bold: "rte-bold", italic: "rte-italic", underline: "rte-underline" },
+        heading: { h1: "rte-h rte-h1", h2: "rte-h rte-h2", h3: "rte-h rte-h3" },
+      },
+      onError: (e: unknown) => console.error(e),
+    }),
+    [readOnly]
+  );
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      {!readOnly && <Toolbar />}
+      <RichTextPlugin
+        contentEditable={<ContentEditable className="rte-editable" />}
+        placeholder={<div className="rte-placeholder">{placeholder}</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <HistoryPlugin />
+      <LoadInitialOnce html={initialHTML} />
+      <OnChangePlugin
+        onChange={(editorState, editor) => {
+          editorState.read(() => {
+            const html = $generateHtmlFromNodes(editor);
+            onChange?.(html);
+          });
+        }}
+      />
+    </LexicalComposer>
+  );
+}
+
+function LoadInitialOnce({ html }: { html: string }) {
+  const [editor] = useLexicalComposerContext();
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+
+    if (!html) return;
+
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(html, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      // If import produced no blocks, ensure at least one paragraph
+      if (nodes.length === 0) {
+        root.append($createParagraphNode());
+      } else {
+        root.append(...nodes);
+      }
+    });
+  }, [editor, html]);
+
+  return null;
+}
+
+
+(Your Toolbar can stay as-is.)
+
+2) Pass a stable initialHTML from the parent and don’t feed it back in
+
+In your JournalEntry:
+
+Keep content as the live HTML coming from onChange.
+
+Pass the initial value only once by keying the editor on the entry id, so it remounts when you open a different entry.
+
+<div className="flex-1 min-h-0 mb-4">
+  <RichTextEditorLexical
+    key={currentEntryId ?? "new"}       // remount when switching entries
+    initialHTML={entry?.content ?? ""}  // load once into the editor
+    onChange={setContent}               // keep live HTML here
+    placeholder="Start writing your journal entry..."
+    readOnly={readOnly}
+  />
+</div>
+
+
+Important: Do not pass content back into the editor as a prop that triggers re-imports. Only use onChange to update your state for saving.
+
+3) Make sure your viewer renders HTML
+
+If the entry looked blank after saving, your viewer probably renders plain text. Render the saved HTML:
+
+function EntryView({ html }: { html: string }) {
+  return <div className="rte-editable" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+4) Quick sanity CSS (unchanged but useful)
+.rte-editable{
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size:12px; line-height:12px;
+  white-space:pre-wrap; letter-spacing:0;
+  outline:none; min-height:260px; box-sizing:border-box;
+  padding:12px; border:1px solid var(--mac-black); background:transparent;
+}
+.rte-p{margin:0; line-height:12px;}
+.rte-h{margin:0; font-weight:700; font-size:inherit; line-height:12px;}
+.rte-h1,.rte-h2,.rte-h3{display:inline;}
+.rte-bold{font-weight:700;} .rte-italic{font-style:italic;} .rte-underline{text-decoration:underline;}
+
+Why this fixes the “one char per line”
+
+You were re-importing on every keystroke. Now the document is imported once (on mount / on entry switch), and afterwards the editor keeps its own state; onChange just gives you HTML for saving.
+
+After this, Bold/Italic/Underline + H1/H2/H3 should work, caret will be solid, and save/view will be correct. If you also want bullet/numbered lists, use the small add-on I sent earlier—works fine with this setup.

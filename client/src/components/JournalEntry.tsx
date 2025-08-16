@@ -315,7 +315,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       
       <div className="flex-1 min-h-0 mb-4">
         <RichTextEditorLexical
-          value={content}
+          key={currentEntryId ?? "new"}
+          initialHTML={entry?.content ?? ""}
           onChange={setContent}
           placeholder="Start writing your journal entry..."
           readOnly={readOnly}
