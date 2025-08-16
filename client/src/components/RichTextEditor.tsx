@@ -328,8 +328,21 @@ export default function RichTextEditor({
     <div className="rich-text-editor">
 
       
-      {/* Live preview overlay */}
-      <div className="editor-container">
+      {/* Container with border/padding - both layers get identical content boxes */}
+      <div
+        className="editor-container"
+        style={{
+          position: 'relative',
+          // Single source of truth for all metrics
+          ['--rte-font' as any]: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+          ['--rte-size' as any]: '12px',
+          ['--rte-line' as any]: '12px', // pixel line-height matches font size
+          ['--rte-pad' as any]: '12px',
+          boxSizing: 'border-box',
+          border: '1px solid var(--mac-black)',
+          padding: 'var(--rte-pad)',
+        }}
+      >
         <textarea
           ref={editorRef}
           value={value}
@@ -348,58 +361,54 @@ Try these formatting options:
 - Use Tab to indent nested items`}
           className="rich-text-input-overlay"
           data-testid={testId}
-          style={{ 
+          style={{
             position: 'absolute',
-            top: '0px',
-            left: '0px',
-            width: '100%',
-            height: '100%',
-            padding: '12px',
-            margin: '0px',
-            border: '1px solid var(--mac-black)',
-            fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
-            fontSize: '12px',
-            lineHeight: '1.4',
+            inset: 0, // replaces top/left/width/height
+            padding: 0, // padding lives on container
+            margin: 0,
+            border: 'none',
+            boxSizing: 'border-box',
+            fontFamily: 'var(--rte-font)',
+            fontSize: 'var(--rte-size)',
+            lineHeight: 'var(--rte-line)',
+            letterSpacing: '0px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
             color: 'transparent',
-            backgroundColor: 'transparent',
+            background: 'transparent',
             caretColor: 'black',
             zIndex: 2,
             resize: 'none',
             outline: 'none',
-            boxSizing: 'border-box',
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word',
-            textRendering: 'optimizeSpeed',
+            WebkitFontSmoothing: 'none',
             fontKerning: 'none',
-            letterSpacing: '0px'
+            textRendering: 'optimizeSpeed',
+            tabSize: 2,
           }}
+          spellCheck={false}
         />
         <FormattedTextDisplay
           content={value || ''}
           className="live-preview-overlay"
           style={{
             position: 'absolute',
-            top: '0px',
-            left: '0px',
-            width: '100%',
-            height: '100%',
-            padding: '12px',
-            margin: '0px',
-            border: '1px solid transparent',
-            fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
-            fontSize: '12px',
-            lineHeight: '1.4',
+            inset: 0,
+            padding: 0, // padding lives on container
+            margin: 0,
+            border: 'none',
+            boxSizing: 'border-box',
+            fontFamily: 'var(--rte-font)',
+            fontSize: 'var(--rte-size)',
+            lineHeight: 'var(--rte-line)',
+            letterSpacing: '0px',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
             pointerEvents: 'none',
             zIndex: 1,
             background: 'transparent',
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word',
-            overflow: 'hidden',
-            minHeight: 'auto',
-            boxSizing: 'border-box',
-            textRendering: 'optimizeSpeed',
+            WebkitFontSmoothing: 'none',
             fontKerning: 'none',
-            letterSpacing: '0px'
+            textRendering: 'optimizeSpeed',
           }}
         />
       </div>

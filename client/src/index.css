@@ -1165,21 +1165,17 @@
   border: 1px solid var(--mac-black) !important;
 }
 
-/* Live preview overlay must match textarea exactly */
+/* Live preview overlay - zero out element margins to prevent content drift */
+.live-preview-overlay h1,
+.live-preview-overlay h2,
+.live-preview-overlay h3,
+.live-preview-overlay p {
+  margin: 0 !important;
+}
+
 .formatted-text-display.live-preview-overlay {
-  padding: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  min-height: auto !important;
-  margin: 0px !important;
-  line-height: 1.4 !important;
-  font-size: 12px !important;
-  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
-  text-rendering: optimizeSpeed !important;
-  font-kerning: none !important;
-  letter-spacing: 0px !important;
-  white-space: pre-wrap !important;
-  word-wrap: break-word !important;
+  /* All positioning/sizing handled by inline styles */
+  overflow: hidden;
 }
 
 .formatted-h1 {

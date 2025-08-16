@@ -1,0 +1,117 @@
+What to change (exactly)
+
+Give both layers the same metrics and remove borders from the layers. Put the border on the container so both children have identical content boxes.
+
+Use pixel line-height (no decimals) that matches the font size. Your current 1.4 causes sub-pixel rounding vs. selection painting.
+
+Kill default margins inside the preview (headers/paragraphs can add top margins).
+
+Share one style object so nothing drifts.
+
+Patch
+// 1) Put the border/padding on the container instead of the children
+<div
+  className="editor-container"
+  style={{
+    position: 'relative',
+    // one source of truth for metrics
+    // (you can tweak size, but keep both the same and use integer px line-height)
+    ['--rte-font'] as any: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+    ['--rte-size'] as any: '12px',
+    ['--rte-line'] as any: '12px',   // <- pixel line-height (match font size)
+    ['--rte-pad'] as any: '12px',
+    boxSizing: 'border-box',
+    border: '1px solid var(--mac-black)',
+    padding: 'var(--rte-pad)',
+  }}
+>
+  {/* 2) Shared base styles for BOTH layers */}
+  {/*
+    Important: no border/margin/padding here, those live on the container.
+    Keep positions/boxes identical.
+  */}
+  <textarea
+    ref={editorRef}
+    value={value}
+    onChange={handleInput}
+    onKeyDown={handleKeyDown}
+    onMouseUp={handleTextSelection}
+    placeholder={/* ... same as before ... */}
+    data-testid={testId}
+    className="rich-text-input-overlay"
+    style={{
+      position: 'absolute',
+      inset: 0,                   // replaces top/left/width/height
+      padding: 0,                 // padding lives on container
+      margin: 0,
+      border: 'none',
+      boxSizing: 'border-box',
+      fontFamily: 'var(--rte-font)',
+      fontSize: 'var(--rte-size)',
+      lineHeight: 'var(--rte-line)',
+      letterSpacing: '0px',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      color: 'transparent',
+      background: 'transparent',
+      caretColor: 'black',
+      zIndex: 2,
+      resize: 'none',
+      outline: 'none',
+      // keep bitmap/retro fonts stable
+      WebkitFontSmoothing: 'none',
+      fontKerning: 'none',
+      textRendering: 'optimizeSpeed',
+      tabSize: 2,
+    }}
+    spellCheck={false}
+  />
+
+  <FormattedTextDisplay
+    content={value || ''}
+    className="live-preview-overlay"
+    style={{
+      position: 'absolute',
+      inset: 0,
+      padding: 0,                 // padding lives on container
+      margin: 0,
+      border: 'none',
+      boxSizing: 'border-box',
+      fontFamily: 'var(--rte-font)',
+      fontSize: 'var(--rte-size)',
+      lineHeight: 'var(--rte-line)',
+      letterSpacing: '0px',
+      whiteSpace: 'pre-wrap',
+      wordBreak: 'break-word',
+      pointerEvents: 'none',
+      zIndex: 1,
+      background: 'transparent',
+      WebkitFontSmoothing: 'none',
+      fontKerning: 'none',
+      textRendering: 'optimizeSpeed',
+    }}
+  />
+</div>
+
+Tiny but important extras
+
+In your preview component’s CSS, zero out element margins so headings don’t push the first line down:
+
+.live-preview-overlay h1,
+.live-preview-overlay h2,
+.live-preview-overlay h3,
+.live-preview-overlay p {
+  margin: 0;
+}
+
+
+Keep fontSize and lineHeight integer px (e.g., 12/12 or 13/13). If you bump the size, bump the line-height to the same integer.
+
+If you ever change padding, change it only on the container.
+
+If this still looks off by a pixel on some browsers, nudge with a single-pixel correction on the textarea:
+
+transform: translate(0px, 1px);
+
+
+…but you shouldn’t need it after the changes above.
