@@ -356,13 +356,16 @@ export default function RichTextEditor({
           <span className="hint">Shortcuts: Ctrl+B/I/U • "- " for bullets • "1. " for numbers • "#/#/###" for headings • Tab to indent</span>
         </div>
       </div>
-      <textarea
-        ref={editorRef}
-        value={value}
-        onChange={handleInput}
-        onKeyDown={handleKeyDown}
-        onMouseUp={handleTextSelection}
-        placeholder={`${placeholder}
+      
+      {/* Live preview overlay */}
+      <div className="editor-container">
+        <textarea
+          ref={editorRef}
+          value={value}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          onMouseUp={handleTextSelection}
+          placeholder={`${placeholder}
 
 Try these formatting options:
 - Bullet points (- + space)
@@ -372,9 +375,37 @@ Try these formatting options:
 - *Italic* (Ctrl+I)  
 - _Underline_ (Ctrl+U)
 - Use Tab to indent nested items`}
-        className="rich-text-input"
-        data-testid={testId}
-      />
+          className="rich-text-input"
+          data-testid={testId}
+          style={{ 
+            position: 'absolute',
+            color: 'transparent',
+            caretColor: 'black',
+            zIndex: 2
+          }}
+        />
+        <div
+          className="live-preview-overlay"
+          style={{
+            position: 'absolute',
+            pointerEvents: 'none',
+            zIndex: 1,
+            padding: '12px',
+            border: 'none',
+            background: 'transparent'
+          }}
+        >
+          <FormattedTextDisplay
+            content={value || ''}
+            className=""
+            style={{
+              border: 'none',
+              background: 'transparent',
+              padding: '0'
+            }}
+          />
+        </div>
+      </div>
       {showStressPopover && (
         <StressLevelPopover
           position={popoverPosition}

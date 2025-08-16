@@ -4,9 +4,10 @@ interface FormattedTextDisplayProps {
   content: string;
   className?: string;
   'data-testid'?: string;
+  style?: React.CSSProperties;
 }
 
-export default function FormattedTextDisplay({ content, className = '', 'data-testid': testId }: FormattedTextDisplayProps) {
+export default function FormattedTextDisplay({ content, className = '', 'data-testid': testId, style }: FormattedTextDisplayProps) {
   // Convert markdown-style formatting to HTML for proper display
   const convertToHtml = (text: string) => {
     if (!text) return '';
@@ -45,7 +46,8 @@ export default function FormattedTextDisplay({ content, className = '', 'data-te
       style={{
         fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
         fontSize: '12px',
-        fontWeight: 'normal'
+        fontWeight: 'normal',
+        ...style
       }}
     />
   );

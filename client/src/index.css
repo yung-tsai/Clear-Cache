@@ -1007,12 +1007,36 @@
   @apply italic;
 }
 
+.editor-container {
+  position: relative;
+  flex: 1;
+  min-height: 150px;
+}
+
 .rich-text-input {
-  @apply flex-1 p-3 border-none outline-none resize-none bg-white;
-  font-family: Monaco, "Lucida Console", monospace;
-  font-size: 11px;
+  width: 100%;
+  height: 100%;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif;
+  font-size: 12px;
   line-height: 1.4;
+  padding: 12px;
+  border: 1px solid var(--mac-black);
+  background: var(--mac-white);
+  resize: none;
+  outline: none;
+  min-height: 150px;
   tab-size: 2;
+}
+
+.live-preview-overlay {
+  width: 100%;
+  height: 100%;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
 }
 
 /* Rich text heading styles for read-only view */
