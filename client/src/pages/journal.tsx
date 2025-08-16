@@ -225,14 +225,6 @@ export default function Journal() {
     }));
   }
 
-  function updateWindowSize(windowId: string, size: { width: number; height: number }) {
-    setWindows(prev => prev.map(w => 
-      w.id === windowId 
-        ? { ...w, size }
-        : w
-    ));
-  }
-
   function handleTrashDrop() {
     if (draggedEntry) {
       // This will be handled by the SearchWindow component

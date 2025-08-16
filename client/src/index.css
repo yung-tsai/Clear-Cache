@@ -1171,6 +1171,10 @@
   border: none !important;
   background: transparent !important;
   min-height: auto !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+  font-size: 12px !important;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
 }
 
 .formatted-h1 {

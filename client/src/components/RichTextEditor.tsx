@@ -259,29 +259,8 @@ export default function RichTextEditor({
   };
 
   const handleTextSelection = () => {
-    if (!editorRef.current || readOnly) return;
-    
-    const selection = window.getSelection();
-    const selectedText = selection?.toString().trim();
-    
-    if (selectedText && selectedText.length > 2) {
-      const range = editorRef.current.selectionStart;
-      const endRange = editorRef.current.selectionEnd;
-      
-      if (range !== endRange) {
-        const rect = editorRef.current.getBoundingClientRect();
-        setSelectedText(selectedText);
-        setSelectionRange({ start: range, end: endRange });
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-        
-        setPopoverPosition({
-          x: rect.left + scrollLeft + 20,
-          y: rect.top + scrollTop - 10
-        });
-        setShowStressPopover(true);
-      }
-    }
+    // Disable catharsis popup - it interferes with text formatting
+    return;
   };
 
   const handleStressSelection = (stressLevel: 'angry' | 'sad' | 'anxious') => {
@@ -389,7 +368,9 @@ Try these formatting options:
             outline: 'none',
             boxSizing: 'border-box',
             whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word'
+            wordWrap: 'break-word',
+            textRendering: 'optimizeSpeed',
+            fontKerning: 'none'
           }}
         />
         <FormattedTextDisplay
