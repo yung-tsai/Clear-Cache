@@ -1071,15 +1071,15 @@
 
 /* Formatted text display styles */
 .formatted-text-display {
-  font-family: 'Monaco', 'Lucida Console', monospace;
-  font-size: 11px;
-  line-height: 1.4;
-  padding: 12px;
-  min-height: 150px;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  background: var(--mac-white);
-  border: 1px solid var(--mac-black);
+  font-family: 'Monaco', 'Lucida Console', monospace !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  padding: 12px !important;
+  min-height: 150px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: break-word !important;
+  background: var(--mac-white) !important;
+  border: 1px solid var(--mac-black) !important;
 }
 
 .formatted-h1 {
@@ -1105,16 +1105,22 @@
   display: block !important;
 }
 
-.formatted-bold {
+.formatted-text-display .formatted-bold, 
+.formatted-text-display strong {
   font-weight: bold !important;
+  font-family: inherit !important;
 }
 
-.formatted-italic {
+.formatted-text-display .formatted-italic,
+.formatted-text-display em {
   font-style: italic !important;
+  font-family: inherit !important;
 }
 
-.formatted-underline {
+.formatted-text-display .formatted-underline,
+.formatted-text-display u {
   text-decoration: underline !important;
+  font-family: inherit !important;
 }
 
 .rich-text-editor .bold {
