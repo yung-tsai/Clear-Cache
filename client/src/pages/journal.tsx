@@ -173,7 +173,7 @@ export default function Journal() {
       id: `view-${entryId}`,
       type: 'view' as const,
       title: `View: ${title}`,
-      component: <JournalEntry entryId={entryId} readOnly={true} onClose={() => closeWindow(`view-${entryId}`)} />,
+      component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(`view-${entryId}`)} />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 700, height: 600 },
       zIndex: nextZIndex,

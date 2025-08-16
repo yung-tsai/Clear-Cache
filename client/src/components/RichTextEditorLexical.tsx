@@ -105,12 +105,13 @@ function LoadInitialOnce({ html }: { html: string }) {
   return null;
 }
 
-// Keyboard shortcuts plugin for Bold/Italic/Underline
+// Keyboard shortcuts plugin for Bold/Italic/Underline and List creation
 function KeyboardShortcutsPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Handle Cmd/Ctrl shortcuts
       if (event.metaKey || event.ctrlKey) {
         switch (event.key.toLowerCase()) {
           case 'b':
@@ -127,6 +128,33 @@ function KeyboardShortcutsPlugin() {
             break;
         }
       }
+      
+      // Handle "- " (dash + space) for bullet lists
+      if (event.key === ' ') {
+        editor.update(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            const anchorNode = selection.anchor.getNode();
+            const textContent = anchorNode.getTextContent();
+            
+            // Check if the line starts with "- " (dash + space)
+            if (textContent === '- ' && selection.anchor.offset === 2) {
+              event.preventDefault();
+              
+              // Create bullet list
+              const listNode = $createListNode("bullet");
+              const listItemNode = $createListItemNode();
+              listNode.append(listItemNode);
+              
+              const element = anchorNode.getTopLevelElementOrThrow();
+              element.replace(listNode);
+              
+              // Clear the "- " text and focus the list item
+              listItemNode.select();
+            }
+          }
+        });
+      }
     };
 
     const editorElement = editor.getElementByKey("root");
@@ -142,36 +170,9 @@ function KeyboardShortcutsPlugin() {
 }
 
 function Toolbar() {
-  const [editor] = useLexicalComposerContext();
-
-  const createBulletList = () => {
-    editor.update(() => {
-      const selection = $getSelection();
-      if ($isRangeSelection(selection)) {
-        const listNode = $createListNode("bullet");
-        const listItemNode = $createListItemNode();
-        listNode.append(listItemNode);
-        
-        const anchorNode = selection.anchor.getNode();
-        const element = anchorNode.getTopLevelElementOrThrow();
-        element.replace(listNode);
-        
-        listItemNode.select();
-      }
-    });
-  };
-
   return (
-    <div className="rte-toolbar">
-      <button 
-        type="button" 
-        className="mac-toolbar-btn"
-        onClick={createBulletList}
-        data-testid="button-bullet-list"
-        title="Create bullet list"
-      >
-        • List
-      </button>
+    <div className="rte-toolbar" style={{ display: 'none' }}>
+      {/* Clean toolbar - functionality moved to keyboard shortcuts */}
     </div>
   );
 }
