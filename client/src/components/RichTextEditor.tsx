@@ -27,11 +27,31 @@ export default function RichTextEditor({
   onFormat
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
   const { playSound } = useMacSounds();
   const [showStressPopover, setShowStressPopover] = useState(false);
   const [popoverPosition, setPopoverPosition] = useState({ x: 0, y: 0 });
   const [selectedText, setSelectedText] = useState("");
   const [selectionRange, setSelectionRange] = useState<{ start: number; end: number } | null>(null);
+
+  // Shared font configuration to prevent fallback drift
+  const sharedFont = {
+    font: `normal normal 400 var(--rte-size)/var(--rte-line) ChicagoFLFExact, Geneva, Arial, sans-serif`,
+    letterSpacing: 0 as any,
+    whiteSpace: 'pre-wrap' as const,
+    overflowWrap: 'break-word' as const,
+    WebkitFontSmoothing: 'none' as const,
+    fontKerning: 'none' as const,
+    textRendering: 'optimizeSpeed' as const,
+    WebkitTextSizeAdjust: '100%' as const,
+  } as const;
+
+  // Scroll synchronization to prevent jumps when content overflows
+  const onScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+    if (previewRef.current) {
+      previewRef.current.scrollTop = e.currentTarget.scrollTop;
+    }
+  };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     playSound('type');
@@ -300,6 +320,35 @@ export default function RichTextEditor({
     }
   };
 
+  // Runtime line-height calibrator to handle browser/zoom differences
+  useEffect(() => {
+    const ta = editorRef.current;
+    if (!ta) return;
+    
+    const probe = document.createElement('div');
+    Object.assign(probe.style, {
+      position: 'absolute',
+      visibility: 'hidden',
+      inset: '0',
+      padding: '0',
+      margin: '0',
+      border: 'none',
+      boxSizing: 'border-box',
+      font: `normal normal 400 var(--rte-size)/var(--rte-line) ChicagoFLFExact, Geneva, Arial, sans-serif`,
+      whiteSpace: 'pre-wrap',
+    } as CSSStyleDeclaration);
+    probe.textContent = 'X\nX';
+    ta.parentElement!.appendChild(probe);
+
+    const taLH = parseFloat(getComputedStyle(ta).lineHeight);
+    const pvLH = parseFloat(getComputedStyle(probe).lineHeight);
+
+    if (Number.isFinite(taLH) && Number.isFinite(pvLH) && taLH !== pvLH) {
+      document.documentElement.style.setProperty('--rte-line', `${taLH}px`);
+    }
+    probe.remove();
+  }, []);
+
   // Convert markdown-like syntax to HTML for display
   const convertToHtml = (raw: string) => {
     const text = raw.replace(/\r\n|\r/g, '\n'); // normalize line endings
@@ -315,6 +364,9 @@ export default function RichTextEditor({
       .replace(/\[stress-anxious\](.*?)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>');
       // REMOVED: .replace(/\n/g, '<br>') - let CSS handle newlines with whiteSpace: 'pre-wrap'
   };
+
+  // Preserve trailing blank line visually to match textarea
+  const previewValue = value.endsWith('\n') ? value + '\u200B' : value;
 
   if (readOnly) {
     return (
@@ -335,7 +387,6 @@ export default function RichTextEditor({
         style={{
           position: 'relative',
           // Single source of truth for all metrics
-          ['--rte-font' as any]: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
           ['--rte-size' as any]: '12px',
           ['--rte-line' as any]: '12px', // pixel line-height matches font size
           ['--rte-pad' as any]: '12px',
@@ -350,6 +401,7 @@ export default function RichTextEditor({
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           onMouseUp={handleTextSelection}
+          onScroll={onScroll}
           placeholder={`${placeholder}
 
 Try these formatting options:
@@ -363,53 +415,42 @@ Try these formatting options:
           className="rich-text-input-overlay"
           data-testid={testId}
           style={{
+            ...sharedFont,
             position: 'absolute',
-            inset: 0, // replaces top/left/width/height
-            padding: 0, // padding lives on container
+            inset: 0,
+            padding: 0,
             margin: 0,
             border: 'none',
             boxSizing: 'border-box',
-            fontFamily: 'var(--rte-font)',
-            fontSize: 'var(--rte-size)',
-            lineHeight: 'var(--rte-line)',
-            letterSpacing: '0px',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
             color: 'transparent',
             background: 'transparent',
             caretColor: 'black',
             zIndex: 2,
             resize: 'none',
             outline: 'none',
-            WebkitFontSmoothing: 'none',
-            fontKerning: 'none',
-            textRendering: 'optimizeSpeed',
             tabSize: 2,
+            display: 'block',
+            transform: 'translateZ(0)', // nudges Chrome to consistent raster
           }}
           spellCheck={false}
         />
         <FormattedTextDisplay
-          content={value || ''}
+          ref={previewRef}
+          content={previewValue}
           className="live-preview-overlay"
           style={{
+            ...sharedFont,
             position: 'absolute',
             inset: 0,
-            padding: 0, // padding lives on container
+            padding: 0,
             margin: 0,
             border: 'none',
             boxSizing: 'border-box',
-            fontFamily: 'var(--rte-font)',
-            fontSize: 'var(--rte-size)',
-            lineHeight: 'var(--rte-line)',
-            letterSpacing: '0px',
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
             pointerEvents: 'none',
             zIndex: 1,
             background: 'transparent',
-            WebkitFontSmoothing: 'none',
-            fontKerning: 'none',
-            textRendering: 'optimizeSpeed',
+            display: 'block',
+            transform: 'translateZ(0)',
           }}
         />
       </div>

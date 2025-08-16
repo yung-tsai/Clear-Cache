@@ -1165,13 +1165,21 @@
   border: 1px solid var(--mac-black) !important;
 }
 
-/* Live preview overlay - zero out element margins and normalize line-height */
-.live-preview-overlay h1,
-.live-preview-overlay h2,
-.live-preview-overlay h3,
-.live-preview-overlay p {
+/* Load font once with unique name to prevent fallback issues */
+@font-face {
+  font-family: 'ChicagoFLFExact';
+  src: url('/fonts/ChicagoFLF.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Live preview overlay - zero out ALL element margins and normalize line-height */
+.live-preview-overlay,
+.live-preview-overlay * {
   margin: 0 !important;
-  line-height: 12px !important;
+  line-height: var(--rte-line) !important;
+  letter-spacing: 0 !important;
 }
 
 .formatted-text-display.live-preview-overlay {

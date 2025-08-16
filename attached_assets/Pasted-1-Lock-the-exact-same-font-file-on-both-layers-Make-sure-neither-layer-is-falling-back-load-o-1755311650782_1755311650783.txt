@@ -1,0 +1,143 @@
+1) Lock the exact same font file on both layers
+
+Make sure neither layer is falling back.
+
+/* load once, name it something unique so you know you’re using it */
+@font-face {
+  font-family: 'ChicagoFLFExact';
+  src: url('/fonts/ChicagoFLF.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+Then use the font shorthand so computed values are identical:
+
+// in the container, keep your vars:
+['--rte-size' as any]: '12px',
+['--rte-line' as any]: '12px',
+
+// apply the SAME shorthand to BOTH layers:
+const sharedFont = {
+  font: `normal normal 400 var(--rte-size)/var(--rte-line) ChicagoFLFExact, Geneva, Arial, sans-serif`,
+  letterSpacing: 0 as any,
+  whiteSpace: 'pre-wrap' as const,
+  overflowWrap: 'break-word' as const, // better than word-break
+  WebkitFontSmoothing: 'none' as const,
+  fontKerning: 'none' as const,
+  textRendering: 'optimizeSpeed' as const,
+  // avoid mobile/zoom text adjustments
+  WebkitTextSizeAdjust: '100%' as const,
+} as const;
+
+
+Use it in both places:
+
+<textarea
+  style={{
+    ...sharedFont,
+    position: 'absolute',
+    inset: 0,
+    padding: 0,
+    margin: 0,
+    border: 'none',
+    boxSizing: 'border-box',
+    color: 'transparent',
+    background: 'transparent',
+    caretColor: 'black',
+    zIndex: 2,
+    resize: 'none',
+    outline: 'none',
+    tabSize: 2,
+    display: 'block',
+    transform: 'translateZ(0)', // nudges Chrome to consistent raster
+  }}
+  onScroll={onScroll}
+/>
+
+<FormattedTextDisplay
+  ref={previewRef}
+  content={value || ''}
+  style={{
+    ...sharedFont,
+    position: 'absolute',
+    inset: 0,
+    padding: 0,
+    margin: 0,
+    border: 'none',
+    boxSizing: 'border-box',
+    pointerEvents: 'none',
+    zIndex: 1,
+    background: 'transparent',
+    display: 'block',
+    transform: 'translateZ(0)',
+  }}
+/>
+
+2) Zero margins + force line-height inside the preview subtree
+
+Headers or any element inside FormattedTextDisplay must not alter line boxes.
+
+.live-preview-overlay,
+.live-preview-overlay * {
+  margin: 0 !important;
+  line-height: var(--rte-line) !important; /* 12px, same as textarea */
+  letter-spacing: 0 !important;
+}
+
+
+(You already removed <br> conversion—good. Keep pre-wrap.)
+
+3) Preserve trailing blank line visually
+
+If you end with \n, force the preview to keep that last empty line so it matches the textarea:
+
+const previewValue =
+  value.endsWith('\n') ? value + '\u200B' : value;
+
+<FormattedTextDisplay content={previewValue} /* ... */ />
+
+4) Scroll sync once content overflows
+
+Prevents “it looks fine then jumps when I scroll”.
+
+const previewRef = useRef<HTMLDivElement>(null);
+const onScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
+  if (previewRef.current) previewRef.current.scrollTop = e.currentTarget.scrollTop;
+};
+
+
+Pass ref={previewRef} to the preview.
+
+5) Last-mile safety: runtime line-height calibrator (optional)
+
+If a user’s Chrome/zoom/DPR still introduces a tiny mismatch, measure once and snap the preview to the textarea’s computed line-height.
+
+useEffect(() => {
+  const ta = editorRef.current;
+  if (!ta) return;
+  const probe = document.createElement('div');
+  Object.assign(probe.style, {
+    position: 'absolute',
+    visibility: 'hidden',
+    inset: '0',
+    padding: '0',
+    margin: '0',
+    border: 'none',
+    boxSizing: 'border-box',
+    // EXACT same font shorthand:
+    font: `normal normal 400 var(--rte-size)/var(--rte-line) ChicagoFLFExact, Geneva, Arial, sans-serif`,
+    whiteSpace: 'pre-wrap',
+  } as CSSStyleDeclaration);
+  probe.textContent = 'X\nX';
+  ta.parentElement!.appendChild(probe);
+
+  const taLH = parseFloat(getComputedStyle(ta).lineHeight);
+  const pvLH = parseFloat(getComputedStyle(probe).lineHeight);
+
+  if (Number.isFinite(taLH) && Number.isFinite(pvLH) && taLH !== pvLH) {
+    document.documentElement.style.setProperty('--rte-line', `${taLH}px`);
+  }
+  probe.remove();
+}, []);
