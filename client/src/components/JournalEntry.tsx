@@ -7,9 +7,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditorLexical from "@/components/RichTextEditorLexical";
 import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
-import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2, Heart } from "lucide-react";
-
-import { AutoTagger } from "@/components/AutoTagger";
+import { Mic, MicOff, Save, X, Calendar, Clock, Trash2, Edit2, Heart } from "lucide-react";
 
 interface JournalEntryProps {
   entryId?: string;
@@ -23,10 +21,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   const [currentEntryId, setCurrentEntryId] = useState<string | undefined>(entryId);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
   const [mood, setMood] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
   const [journalDate, setJournalDate] = useState(""); // Will be set based on existing entry or today's date
   const [saveStatus, setSaveStatus] = useState("");
   const [catharsisItems, setCatharsisItems] = useState<CatharsisItem[]>([]);
@@ -88,7 +84,6 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     if (entry) {
       setTitle(entry.title);
       setContent(entry.content);
-      setTags((entry.tags || []).join(', '));
       setMood(entry.mood || null);
       setJournalDate(entry.journalDate);
       setCatharsisItems(entry.catharsis || []);
@@ -98,25 +93,11 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   }, [entry]);
 
-  // Auto-generate tag suggestions when content or title changes
-  useEffect(() => {
-    if (title || content) {
-      const suggestions = AutoTagger.analyzeTags(content, title);
-      setSuggestedTags(suggestions);
-    }
-  }, [title, content]);
 
-  const addSuggestedTag = (tag: string) => {
-    playSound('click');
-    const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
-    if (!currentTags.includes(tag)) {
-      const newTags = [...currentTags, tag].join(', ');
-      setTags(newTags);
-    }
-  };
 
   // Voice-to-text functionality using Web Speech API
   const recognitionRef = useRef<any>(null);
+  const editorRef = useRef<any>(null);
   
   const toggleVoiceRecording = async () => {
     if (isRecording) {
@@ -135,17 +116,13 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         
         if (!SpeechRecognition) {
           const errorText = "Speech recognition not supported in this browser. Please type your entry manually.";
-          if (content.trim()) {
-            setContent(content + '\n\n' + errorText);
-          } else {
-            setContent(errorText);
-          }
+          setContent(prev => prev ? prev + '\n\n' + errorText : errorText);
           return;
         }
 
         const recognition = new SpeechRecognition();
         recognition.continuous = true;
-        recognition.interimResults = false; // Only get final results for faster processing
+        recognition.interimResults = false;
         recognition.lang = 'en-US';
         recognitionRef.current = recognition;
         
@@ -167,12 +144,14 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           setIsRecording(false);
           
           if (finalTranscript.trim()) {
-            // Append the transcription to existing content immediately
-            if (content.trim()) {
-              setContent(content + '\n\n' + finalTranscript.trim());
-            } else {
-              setContent(finalTranscript.trim());
-            }
+            // Append the transcription to existing content
+            setContent(prev => {
+              if (prev && prev.trim()) {
+                return prev + '\n\n' + finalTranscript.trim();
+              } else {
+                return finalTranscript.trim();
+              }
+            });
           }
           
           playSound('click');
@@ -185,11 +164,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           
           if (event.error === 'no-speech') {
             const message = "No speech detected. Please try again.";
-            if (content.trim()) {
-              setContent(content + '\n\n' + message);
-            } else {
-              setContent(message);
-            }
+            setContent(prev => prev ? prev + '\n\n' + message : message);
           }
         };
         
@@ -236,7 +211,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     const entryData: InsertJournalEntry = {
       title,
       content,
-      tags: tags.split(',').map(tag => tag.trim()).filter(tag => tag),
+      tags: [],
       mood,
       journalDate,
       catharsis: catharsisItems
@@ -272,40 +247,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         />
       </div>
       
-      <div className="flex items-center gap-2">
-        <label className="min-w-[40px] font-bold text-xs">Tags:</label>
-        <input
-          type="text"
-          className="mac-input flex-1"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="Separate with commas"
-          readOnly={readOnly}
-          data-testid="input-tags"
-        />
-        {/* Auto-generated tag suggestions */}
-        {!readOnly && suggestedTags.length > 0 && (
-          <div className="tag-suggestions">
-            <span className="tag-suggestions-label">Suggested tags:</span>
-            <div className="suggested-tags">
-              {suggestedTags.map((tag, index) => {
-                const currentTags = tags.split(',').map(t => t.trim()).filter(t => t);
-                const isAdded = currentTags.includes(tag);
-                return (
-                  <span
-                    key={index}
-                    className={`suggested-tag ${isAdded ? 'added' : ''}`}
-                    onClick={() => !isAdded && addSuggestedTag(tag)}
-                    data-testid={`suggested-tag-${index}`}
-                  >
-                    {tag} {isAdded && '✓'}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
+
       
 
 
@@ -337,13 +279,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
               style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '120px' }}
             />
           </div>
-          <div className="flex flex-wrap gap-1">
-            {tags.split(',').map(tag => tag.trim()).filter(tag => tag).map((tag, index) => (
-              <span key={index} className="mac-tag" data-testid={`tag-${index}`}>
-                {tag}
-              </span>
-            ))}
-          </div>
+
         </div>
         
         <div className="flex items-center gap-4">
