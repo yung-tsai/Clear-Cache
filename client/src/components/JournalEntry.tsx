@@ -59,6 +59,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       }
       
       onSave?.();
+      // Auto-close window after saving
+      setTimeout(() => onClose?.(), 1000);
     }
   });
 
@@ -77,6 +79,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       setSaveStatus("Entry Updated!");
       setTimeout(() => setSaveStatus(""), 2000);
       onSave?.();
+      // Auto-close window after saving
+      setTimeout(() => onClose?.(), 1000);
     }
   });
 
@@ -98,6 +102,47 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
   // Voice-to-text functionality using Web Speech API
   const recognitionRef = useRef<any>(null);
   const editorRef = useRef<RichTextEditorHandle>(null);
+
+  // Normalize dictation text (turns words into punctuation/newlines)
+  function normalizeDictation(input: string): string {
+    let s = input;
+
+    // Multi-word phrases first
+    s = s.replace(/\b(new\s+paragraph|paragraph\s+break)\b/gi, '\n\n');
+    s = s.replace(/\b(new\s+line|line\s+break)\b/gi, '\n');
+
+    s = s.replace(/\b(open\s+quote|open\s+quotation\s+mark)\b/gi, '"');
+    s = s.replace(/\b(close\s+quote|close\s+quotation\s+mark)\b/gi, '"');
+    s = s.replace(/\b(open\s+single\s+quote)\b/gi, "'");
+    s = s.replace(/\b(close\s+single\s+quote)\b/gi, "'");
+
+    s = s.replace(/\b(ex(?:c|cl)lamation\s+(?:point|mark))\b/gi, '!');
+    s = s.replace(/\b(question\s+mark)\b/gi, '?');
+    s = s.replace(/\b(dot\s+dot\s+dot|ellipsis)\b/gi, '...');
+
+    // Single words
+    s = s.replace(/\b(period|full\s*stop)\b/gi, '.');
+    s = s.replace(/\b(comma)\b/gi, ',');
+    s = s.replace(/\b(colon)\b/gi, ':');
+    s = s.replace(/\b(semicolon)\b/gi, ';');
+    s = s.replace(/\b(dash|hyphen)\b/gi, ' - ');
+    s = s.replace(/\b(ampersand)\b/gi, '&');
+    s = s.replace(/\b(percent\s+sign|percent)\b/gi, '%');
+    s = s.replace(/\b(quote)\b/gi, '"'); // optional catch-all
+
+    // Spacing tidy-up
+    s = s.replace(/\s+([,.;:!?...])/g, '$1');                        // no space before punct
+    s = s.replace(/([,;:])([^\s""')\]}])/g, '$1 $2');              // space after , ; :
+    s = s.replace(/([.?!...])(?!\s|$|["')\]}])/g, '$1 ');            // space after end marks
+    s = s.replace(/\s*-\s*/g, ' - ');                              // normalize dash spacing
+
+    return s.trim();
+  }
+
+  // Optional: capitalize sentence starts
+  function smartCapitalize(s: string): string {
+    return s.replace(/(^|[.?!...]\s+)([a-z])/g, (_m, pre, ch) => pre + ch.toUpperCase());
+  }
   
   const toggleVoiceRecording = async () => {
     if (isRecording) {
@@ -144,11 +189,21 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         
         recognition.onend = () => {
           setIsRecording(false);
-          const text = finalTranscript.trim();
+          let text = finalTranscript.trim();
           if (text) {
-            // Insert the transcript into the editor directly
-            editorRef.current?.insertParagraph();
-            editorRef.current?.insertText(text);
+            text = normalizeDictation(text);
+            text = smartCapitalize(text);
+
+            // Insert respecting paragraphs/newlines
+            const paras = text.split(/\n\n/);
+            paras.forEach((p, pi) => {
+              const lines = p.split(/\n/);
+              lines.forEach((line, li) => {
+                if (line) editorRef.current?.insertText(line);
+                if (li < lines.length - 1) editorRef.current?.insertParagraph(); // new line
+              });
+              if (pi < paras.length - 1) editorRef.current?.insertParagraph();   // new paragraph
+            });
           }
           playSound('click');
         };

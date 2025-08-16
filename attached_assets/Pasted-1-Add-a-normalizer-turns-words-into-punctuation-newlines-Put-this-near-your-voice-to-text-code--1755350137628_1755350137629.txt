@@ -1,0 +1,113 @@
+1) Add a normalizer (turns words into punctuation/newlines)
+
+Put this near your voice-to-text code:
+
+function normalizeDictation(input: string): string {
+  let s = input;
+
+  // Multi-word phrases first
+  s = s.replace(/\b(new\s+paragraph|paragraph\s+break)\b/gi, '\n\n');
+  s = s.replace(/\b(new\s+line|line\s+break)\b/gi, '\n');
+
+  s = s.replace(/\b(open\s+quote|open\s+quotation\s+mark)\b/gi, '“');
+  s = s.replace(/\b(close\s+quote|close\s+quotation\s+mark)\b/gi, '”');
+  s = s.replace(/\b(open\s+single\s+quote)\b/gi, '‘');
+  s = s.replace(/\b(close\s+single\s+quote)\b/gi, '’');
+
+  s = s.replace(/\b(ex(?:c|cl)lamation\s+(?:point|mark))\b/gi, '!');
+  s = s.replace(/\b(question\s+mark)\b/gi, '?');
+  s = s.replace(/\b(dot\s+dot\s+dot|ellipsis)\b/gi, '…');
+
+  // Single words
+  s = s.replace(/\b(period|full\s*stop)\b/gi, '.');
+  s = s.replace(/\b(comma)\b/gi, ',');
+  s = s.replace(/\b(colon)\b/gi, ':');
+  s = s.replace(/\b(semicolon)\b/gi, ';');
+  s = s.replace(/\b(dash|hyphen)\b/gi, ' - ');
+  s = s.replace(/\b(ampersand)\b/gi, '&');
+  s = s.replace(/\b(percent\s+sign|percent)\b/gi, '%');
+  s = s.replace(/\b(quote)\b/gi, '"'); // optional catch-all
+
+  // Spacing tidy-up
+  s = s.replace(/\s+([,.;:!?…])/g, '$1');                        // no space before punct
+  s = s.replace(/([,;:])([^\s"”’)\]}])/g, '$1 $2');              // space after , ; :
+  s = s.replace(/([.?!…])(?!\s|$|[”’)\]}])/g, '$1 ');            // space after end marks
+  s = s.replace(/\s*-\s*/g, ' - ');                              // normalize dash spacing
+
+  return s.trim();
+}
+
+// Optional: capitalize sentence starts
+function smartCapitalize(s: string): string {
+  return s.replace(/(^|[.?!…]\s+)([a-z])/g, (_m, pre, ch) => pre + ch.toUpperCase());
+}
+
+2) Insert normalized text into Lexical
+
+You’re already inserting on onend. Just normalize first (and respect \n / \n\n for line/paragraph breaks):
+
+recognition.onend = () => {
+  setIsRecording(false);
+  let text = finalTranscript.trim();
+  if (text) {
+    text = normalizeDictation(text);
+    // text = smartCapitalize(text); // <- enable if you want auto caps
+
+    // Insert respecting paragraphs/newlines
+    const paras = text.split(/\n\n/);
+    paras.forEach((p, pi) => {
+      const lines = p.split(/\n/);
+      lines.forEach((line, li) => {
+        if (line) editorRef.current?.insertText(line);
+        if (li < lines.length - 1) editorRef.current?.insertParagraph(); // new line
+      });
+      if (pi < paras.length - 1) editorRef.current?.insertParagraph();   // new paragraph
+    });
+  }
+  playSound('click');
+};
+
+
+If you prefer live insertion (more like Siri), set recognition.interimResults = true and in onresult handle each isFinal chunk:
+
+if (event.results[i].isFinal) {
+  let chunk = event.results[i][0].transcript;
+  chunk = normalizeDictation(chunk);
+  const parts = chunk.split(/\n\n/);
+  parts.forEach((p, pi) => {
+    const lines = p.split(/\n/);
+    lines.forEach((line, li) => {
+      if (line) editorRef.current?.insertText(line + (li === lines.length - 1 && pi === parts.length - 1 ? '' : ' '));
+      if (li < lines.length - 1) editorRef.current?.insertParagraph();
+    });
+    if (pi < parts.length - 1) editorRef.current?.insertParagraph();
+  });
+}
+
+3) Supported phrases (case-insensitive)
+
+“period”, “full stop” → .
+
+“comma” → ,
+
+“question mark” → ?
+
+“exclamation point/mark” (handles “exclaimation” misspelling too) → !
+
+“colon”, “semicolon”
+
+“dash”, “hyphen” → -
+
+“ellipsis”, “dot dot dot” → …
+
+“new line”, “line break” → newline
+
+“new paragraph”, “paragraph break” → blank line
+
+“open quote/close quote”, “open/close single quote” → “ ” ‘ ’
+
+“ampersand” → &, “percent (sign)” → %
+
+Optional “quote” → "
+
+You can add more the same way (e.g., “at sign” → @, “hashtag” → #).
