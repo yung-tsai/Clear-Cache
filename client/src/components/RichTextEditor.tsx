@@ -336,11 +336,23 @@ export default function RichTextEditor({
   };
 
   if (readOnly) {
+    const htmlContent = convertToHtml(value);
     return (
       <div 
-        className="rich-text-editor"
-        dangerouslySetInnerHTML={{ __html: convertToHtml(value) }}
+        className="rich-text-display"
+        dangerouslySetInnerHTML={{ __html: htmlContent }}
         data-testid={testId}
+        style={{
+          fontFamily: 'Monaco, "Lucida Console", monospace',
+          fontSize: '11px',
+          lineHeight: '1.4',
+          padding: '12px',
+          minHeight: '150px',
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word',
+          background: 'var(--mac-white)',
+          border: '1px solid var(--mac-black)'
+        }}
       />
     );
   }

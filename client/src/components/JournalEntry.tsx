@@ -284,10 +284,44 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         const newContent = content.substring(0, start) + formattedText + content.substring(end);
         setContent(newContent);
         
-        // Reset cursor position
+        // Reset cursor position and focus
         setTimeout(() => {
           textarea.focus();
-          textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
+          textarea.setSelectionRange(end + (formattedText.length - selectedText.length), end + (formattedText.length - selectedText.length));
+        }, 0);
+      } else {
+        // If no text is selected, insert placeholder text with formatting
+        let placeholder = '';
+        switch (command) {
+          case 'bold':
+            placeholder = '**bold text**';
+            break;
+          case 'italic':
+            placeholder = '*italic text*';
+            break;
+          case 'underline':
+            placeholder = '_underlined text_';
+            break;
+          case 'h1':
+            placeholder = '# Heading 1';
+            break;
+          case 'h2':
+            placeholder = '## Heading 2';
+            break;
+          case 'h3':
+            placeholder = '### Heading 3';
+            break;
+        }
+        
+        const newContent = content.substring(0, start) + placeholder + content.substring(end);
+        setContent(newContent);
+        
+        // Select the placeholder text for easy editing
+        setTimeout(() => {
+          textarea.focus();
+          const placeholderStart = command.startsWith('h') ? start + command.length + 1 : start + (command === 'bold' ? 2 : command === 'italic' ? 1 : 1);
+          const placeholderEnd = start + placeholder.length - (command.startsWith('h') ? 0 : command === 'bold' ? 2 : 1);
+          textarea.setSelectionRange(placeholderStart, placeholderEnd);
         }, 0);
       }
     }
