@@ -1165,12 +1165,13 @@
   border: 1px solid var(--mac-black) !important;
 }
 
-/* Live preview overlay - zero out element margins to prevent content drift */
+/* Live preview overlay - zero out element margins and normalize line-height */
 .live-preview-overlay h1,
 .live-preview-overlay h2,
 .live-preview-overlay h3,
 .live-preview-overlay p {
   margin: 0 !important;
+  line-height: 12px !important;
 }
 
 .formatted-text-display.live-preview-overlay {

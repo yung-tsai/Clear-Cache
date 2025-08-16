@@ -1,0 +1,82 @@
+ood catch—the first line is fixed, but the “short blue bar” on the blank second line means the preview layer and textarea are still diverging on how newlines are measured.
+
+What’s happening:
+
+Your preview HTML is created with ...replace(/\n/g, '<br>')....
+
+The <textarea> gives every newline a full line-height box (even the last/blank ones).
+
+<br> sometimes renders with slightly different metrics (and trailing/empty lines can collapse). That’s why the overlay drifts starting on line 2 (especially on empty lines).
+
+Quick fixes (do all 3)
+
+Stop inserting <br>; let CSS handle newlines.
+Normalize line endings and keep the \n characters in the string.
+
+const convertToHtml = (raw: string) => {
+  const text = raw.replace(/\r\n|\r/g, '\n'); // normalize
+  return text
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/_(.*?)_/g, '<u>$1</u>')
+    // IMPORTANT: remove the .replace(/\n/g, '<br>') line
+}
+
+
+Ensure the preview keeps the newlines and has identical metrics.
+
+<FormattedTextDisplay
+  content={value || ''}
+  className="live-preview-overlay"
+  style={{
+    position: 'absolute',
+    inset: 0,
+    padding: 0,
+    margin: 0,
+    border: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'var(--rte-font)',
+    fontSize: 'var(--rte-size)',
+    lineHeight: 'var(--rte-line)',   // 12px
+    letterSpacing: '0px',
+    whiteSpace: 'pre-wrap',          // <-- keep literal \n
+    wordBreak: 'break-word',
+    pointerEvents: 'none',
+    zIndex: 1,
+    background: 'transparent',
+    WebkitFontSmoothing: 'none',
+    fontKerning: 'none',
+    textRendering: 'optimizeSpeed',
+  }}
+/>
+
+
+Zero out default margins inside the preview (headers, paragraphs can nudge line boxes):
+
+.live-preview-overlay h1,
+.live-preview-overlay h2,
+.live-preview-overlay h3,
+.live-preview-overlay p {
+  margin: 0;
+  line-height: var(--rte-line);
+}
+
+Optional but helpful
+
+Add the same whitespace rules to the textarea too (to keep wrapping identical):
+
+whiteSpace: 'pre-wrap',
+wordBreak: 'break-word',
+tabSize: 2,
+letterSpacing: '0px',
+
+
+If the last trailing newline still collapses visually in the preview, append a tiny sentinel when rendering (not stored in state) to force the final line box:
+
+const rendered = convertToHtml(value + '\u200B'); // zero-width space
+
+
+This removes the <br>/newline metric mismatch so line 2 (and beyond) will align exactly with the selection highlight. If it’s still off by 1px on your machine after this, ping me and I’ll show a one-pixel translateY() shim—but you likely won’t need it once <br> is gone.

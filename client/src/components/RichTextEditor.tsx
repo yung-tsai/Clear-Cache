@@ -301,7 +301,8 @@ export default function RichTextEditor({
   };
 
   // Convert markdown-like syntax to HTML for display
-  const convertToHtml = (text: string) => {
+  const convertToHtml = (raw: string) => {
+    const text = raw.replace(/\r\n|\r/g, '\n'); // normalize line endings
     return text
       .replace(/^### (.*$)/gim, '<h3>$1</h3>')
       .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -311,8 +312,8 @@ export default function RichTextEditor({
       .replace(/_(.*?)_/g, '<u>$1</u>')
       .replace(/\[stress-angry\](.*?)\[\/stress-angry\]/g, '<span class="stress-highlight stress-angry">$1</span>')
       .replace(/\[stress-sad\](.*?)\[\/stress-sad\]/g, '<span class="stress-highlight stress-sad">$1</span>')
-      .replace(/\[stress-anxious\](.*?)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>')
-      .replace(/\n/g, '<br>');
+      .replace(/\[stress-anxious\](.*?)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>');
+      // REMOVED: .replace(/\n/g, '<br>') - let CSS handle newlines with whiteSpace: 'pre-wrap'
   };
 
   if (readOnly) {
