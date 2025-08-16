@@ -1,90 +1,162 @@
-import {useMemo} from "react";
-import {LexicalComposer} from "@lexical/react/LexicalComposer";
-import {RichTextPlugin} from "@lexical/react/LexicalRichTextPlugin";
-import {HistoryPlugin} from "@lexical/react/LexicalHistoryPlugin";
-import {ContentEditable} from "@lexical/react/LexicalContentEditable";
-import {OnChangePlugin} from "@lexical/react/LexicalOnChangePlugin";
-import {LexicalErrorBoundary} from "@lexical/react/LexicalErrorBoundary";
-import {HeadingNode, $createHeadingNode} from "@lexical/rich-text";
-import {FORMAT_TEXT_COMMAND, $getSelection, $isRangeSelection} from "lexical";
-import {$setBlocksType} from "@lexical/selection";
-import { $generateHtmlFromNodes } from "@lexical/html";
+import { useMemo, useEffect } from "react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { HeadingNode, $createHeadingNode } from "@lexical/rich-text";
+import {
+  FORMAT_TEXT_COMMAND,
+  $getSelection,
+  $isRangeSelection,
+  $createParagraphNode,
+  $getRoot,
+} from "lexical";
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
 
 type Props = {
-  value?: string;                    // initial HTML (optional)
-  onChange?: (html: string) => void; // returns HTML on changes
+  value?: string;
+  onChange?: (html: string) => void;
   placeholder?: string;
   readOnly?: boolean;
 };
 
-export default function RichTextEditorLexical({value = "", onChange, placeholder, readOnly}: Props) {
-  const initialConfig = useMemo(() => ({
-    namespace: "retro-journal",
-    editable: !readOnly,
-    nodes: [HeadingNode],
-    onError: (e: any) => console.error(e),
-    theme: {
-      paragraph: "rte-p",
-      text: { bold: "rte-bold", italic: "rte-italic", underline: "rte-underline" },
-      heading: { h1: "rte-h rte-h1", h2: "rte-h rte-h2", h3: "rte-h rte-h3" },
-    },
-    editorState: (editor: any) => {
-      if (!value) return;
-      // naive HTML import: put raw HTML in the editor
-      const div = document.createElement("div");
-      div.innerHTML = value;
-      editor.update(() => {
-        const root = (editor as any).getRootElement?.();
-      });
-    },
-  }), [value, readOnly]);
+export default function RichTextEditorLexical({
+  value = "",
+  onChange,
+  placeholder = "Start typing…",
+  readOnly,
+}: Props) {
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "retro-journal",
+      editable: !readOnly,
+      nodes: [HeadingNode],
+      theme: {
+        paragraph: "rte-p",
+        text: {
+          bold: "rte-bold",
+          italic: "rte-italic",
+          underline: "rte-underline",
+        },
+        heading: {
+          h1: "rte-h rte-h1",
+          h2: "rte-h rte-h2",
+          h3: "rte-h rte-h3",
+        },
+      },
+      onError: (e: unknown) => console.error(e),
+    }),
+    [readOnly]
+  );
 
   return (
     <LexicalComposer initialConfig={initialConfig}>
-      {!readOnly && <Toolbar/>}
+      {!readOnly && <Toolbar />}
       <RichTextPlugin
         contentEditable={<ContentEditable className="rte-editable" />}
-        placeholder={<div className="rte-placeholder">{placeholder || "Start typing…"}</div>}
+        placeholder={<div className="rte-placeholder">{placeholder}</div>}
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
-      <OnChangePlugin onChange={(editorState, editor) => {
-        editorState.read(() => {
-          const html = $generateHtmlFromNodes(editor);
-          onChange?.(html);
-        });
-      }}/>
+      <LoadInitialContent value={value} />
+      <OnChangePlugin
+        onChange={(editorState, editor) => {
+          editorState.read(() => {
+            const html = $generateHtmlFromNodes(editor);
+            onChange?.(html);
+          });
+        }}
+      />
     </LexicalComposer>
   );
 }
 
+function LoadInitialContent({ value }: { value: string }) {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    if (!value) return;
+    
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(value, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      root.append(...nodes);
+    });
+  }, [editor, value]);
+
+  return null;
+}
+
 function Toolbar() {
-  const setHeading = (level: 1|2|3|"p") => {
-    (window as any).$lexicalEditor?.update(() => {
+  const [editor] = useLexicalComposerContext();
+
+  const toggle = (cmd: "bold" | "italic" | "underline") =>
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, cmd);
+
+  const setBlock = (tag: "p" | "h1" | "h2" | "h3") => {
+    editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        if (level === "p") {
-          $setBlocksType(selection, () => document.createElement("p") as any);
+        const anchorNode = selection.anchor.getNode();
+        const element = anchorNode.getTopLevelElementOrThrow();
+        
+        if (tag === "p") {
+          element.replace($createParagraphNode());
         } else {
-          // use HeadingNode from @lexical/rich-text
-          $setBlocksType(selection, () => $createHeadingNode(("h"+level) as any));
+          element.replace($createHeadingNode(tag));
         }
       }
     });
   };
-  const toggle = (cmd: "bold"|"italic"|"underline") =>
-    (window as any).$lexicalEditor?.dispatchCommand(FORMAT_TEXT_COMMAND, cmd);
 
   return (
     <div className="rte-toolbar">
-      <button type="button" onClick={() => toggle("bold")}>B</button>
-      <button type="button" onClick={() => toggle("italic")}>I</button>
-      <button type="button" onClick={() => toggle("underline")}>U</button>
-      <select defaultValue="p" onChange={(e) => setHeading(e.target.value as any)}>
+      <button 
+        type="button" 
+        className="mac-toolbar-btn"
+        onClick={() => toggle("bold")}
+        data-testid="button-bold"
+      >
+        <b>B</b>
+      </button>
+      <button 
+        type="button" 
+        className="mac-toolbar-btn"
+        onClick={() => toggle("italic")}
+        data-testid="button-italic"
+      >
+        <i>I</i>
+      </button>
+      <button 
+        type="button" 
+        className="mac-toolbar-btn"
+        onClick={() => toggle("underline")}
+        data-testid="button-underline"
+      >
+        <u>U</u>
+      </button>
+      <select
+        className="mac-input text-xs"
+        defaultValue="p"
+        onChange={(e) => {
+          if (e.target.value !== "p") {
+            setBlock(e.target.value as "p" | "h1" | "h2" | "h3");
+            e.target.value = "p"; // Reset to normal
+          }
+        }}
+        data-testid="select-text-format"
+        style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '80px', height: '24px' }}
+      >
         <option value="p">Normal</option>
-        <option value="1">H1</option>
-        <option value="2">H2</option>
-        <option value="3">H3</option>
+        <option value="h1">H1</option>
+        <option value="h2">H2</option>
+        <option value="h3">H3</option>
       </select>
     </div>
   );

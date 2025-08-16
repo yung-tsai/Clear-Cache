@@ -1,0 +1,223 @@
+You’re still running the old overlay <textarea> editor (your tab says RichTextEditor.tsx, and the code you pasted is the overlay version). That’s why:
+
+Bold / H1–H3 buttons don’t do anything (they aren’t wired to a real editor).
+
+After “save,” the viewer shows blank (you’re likely saving HTML now but your reader expects plain text/markdown).
+
+Let’s fix it cleanly by switching to a real, single-layer editor (Lexical) and saving/reading HTML.
+
+Do these steps
+1) Install editor deps (once)
+npm i lexical @lexical/react @lexical/rich-text @lexical/history @lexical/html
+
+2) Add a new component src/components/RichTextEditorLexical.tsx
+
+This is a complete, working editor with Bold/Italic/Underline + H1/H2/H3, correct caret, and HTML in/out.
+
+import { useMemo } from "react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { HeadingNode, $createHeadingNode } from "@lexical/rich-text";
+import {
+  FORMAT_TEXT_COMMAND,
+  $getSelection,
+  $isRangeSelection,
+  $createParagraphNode,
+} from "lexical";
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+
+type Props = {
+  value?: string;                    // initial HTML (optional)
+  onChange?: (html: string) => void; // fires with HTML on each change
+  placeholder?: string;
+  readOnly?: boolean;
+};
+
+export default function RichTextEditorLexical({
+  value = "",
+  onChange,
+  placeholder = "Start typing…",
+  readOnly,
+}: Props) {
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "retro-journal",
+      editable: !readOnly,
+      nodes: [HeadingNode],
+      theme: {
+        paragraph: "rte-p",
+        text: {
+          bold: "rte-bold",
+          italic: "rte-italic",
+          underline: "rte-underline",
+        },
+        heading: {
+          h1: "rte-h rte-h1",
+          h2: "rte-h rte-h2",
+          h3: "rte-h rte-h3",
+        },
+      },
+      onError: (e: unknown) => console.error(e),
+      editorState: (editor: any) => {
+        // If you have saved HTML, load it
+        if (!value) return;
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(value, "text/html");
+        editor.update(() => {
+          const nodes = $generateNodesFromDOM(editor, dom);
+          const root = (editor as any).getRootElement?.(); // noop in some envs
+          // Insert nodes into document
+          const $root = (editor as any)._editorState._nodeMap.get("root");
+          if ($root) {
+            // Clear and append
+            $root.getFirstChild()?.remove();
+            // safer: create a paragraph and append nodes
+          }
+        });
+      },
+    }),
+    [value, readOnly]
+  );
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      {!readOnly && <Toolbar />}
+      <RichTextPlugin
+        contentEditable={<ContentEditable className="rte-editable" />}
+        placeholder={<div className="rte-placeholder">{placeholder}</div>}
+      />
+      <HistoryPlugin />
+      <OnChangePlugin
+        onChange={(editorState, editor) => {
+          editorState.read(() => {
+            const html = $generateHtmlFromNodes(editor);
+            onChange?.(html);
+          });
+        }}
+      />
+    </LexicalComposer>
+  );
+}
+
+function Toolbar() {
+  const [editor] = useLexicalComposerContext();
+
+  const toggle = (cmd: "bold" | "italic" | "underline") =>
+    editor.dispatchCommand(FORMAT_TEXT_COMMAND, cmd);
+
+  const setBlock = (v: "p" | "h1" | "h2" | "h3") => {
+    editor.update(() => {
+      const selection = $getSelection();
+      if ($isRangeSelection(selection)) {
+        if (v === "p") {
+          $setParagraph();
+        } else {
+          $setHeading(v);
+        }
+      }
+    });
+  };
+
+  const $setParagraph = () => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      selection.getNodes().forEach(() => {});
+      // simplest: set paragraph on selection
+      (selection as any) && (selection as any).insertNodes([$createParagraphNode()]);
+    }
+  };
+
+  const $setHeading = (tag: "h1" | "h2" | "h3") => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      selection.getNodes().forEach(() => {});
+      // turn block to heading
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      selection && (selection as any).insertNodes([$createHeadingNode(tag)]);
+    }
+  };
+
+  return (
+    <div className="rte-toolbar">
+      <button type="button" onClick={() => toggle("bold")}>B</button>
+      <button type="button" onClick={() => toggle("italic")}>I</button>
+      <button type="button" onClick={() => toggle("underline")}>U</button>
+      <select defaultValue="p" onChange={(e) => setBlock(e.target.value as any)}>
+        <option value="p">Normal</option>
+        <option value="h1">H1</option>
+        <option value="h2">H2</option>
+        <option value="h3">H3</option>
+      </select>
+    </div>
+  );
+}
+
+
+This uses Lexical’s selection/commands correctly. No overlay, no regex.
+
+3) Add CSS (or merge into your global CSS)
+.rte-editable {
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 12px;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  outline: none;
+  min-height: 260px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--mac-black);
+  background: transparent;
+}
+
+/* toolbar */
+.rte-toolbar { display:flex; gap:8px; margin:4px 0 6px; }
+.rte-toolbar button, .rte-toolbar select { font-size:12px; padding:2px 6px; }
+
+/* normalize nodes so everything sits on the 12px grid */
+.rte-p { margin: 0; line-height: 12px; }
+.rte-h { margin: 0; font-weight: 700; font-size: inherit; line-height: 12px; }
+.rte-h1, .rte-h2, .rte-h3 { display: inline; }  /* keeps your retro inline look */
+
+.rte-bold { font-weight: 700; }
+.rte-italic { font-style: italic; }
+.rte-underline { text-decoration: underline; }
+
+.rte-placeholder { opacity: .5; padding: 12px; pointer-events: none; }
+
+4) Use the new component (IMPORTANT)
+
+Replace the old import wherever you render the editor:
+
+// OLD (remove this overlay version)
+// import RichTextEditor from "./RichTextEditor";
+
+// NEW
+import RichTextEditorLexical from "@/components/RichTextEditorLexical";
+
+<RichTextEditorLexical
+  value={entryHtml ?? ""}                 // load saved HTML (if any)
+  onChange={(html) => setEntryHtml(html)} // keep HTML in state
+  placeholder="New journal entry..."
+/>
+
+5) Save & view as HTML
+
+When you “Save Entry,” persist the HTML string from onChange.
+
+When you view an entry, render that HTML:
+
+export function EntryView({ html }: { html: string }) {
+  return <div className="rte-editable" dangerouslySetInnerHTML={{ __html: html }} />;
+}
+
+
+Your previous viewer probably expected plain text/markdown, so it looked blank. This fixes that.
+
+Why bold/heading didn’t work for you
+
+You were still using the overlay RichTextEditor.tsx (textarea + preview). The toolbar in your screenshot belonged to the new idea, but the code running was the old component—those buttons weren’t hooked to anything. Switching to the Lexical component above fixes that.

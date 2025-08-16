@@ -755,6 +755,72 @@
   100% { bottom: 100%; opacity: 0; transform: scale(0.5); }
 }
 
+/* Lexical Rich Text Editor Styles */
+.rte-editable {
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 12px;
+  letter-spacing: 0;
+  white-space: pre-wrap;
+  outline: none;
+  min-height: 260px;
+  box-sizing: border-box;
+  padding: 12px;
+  border: 1px solid var(--mac-black);
+  background: transparent;
+}
+
+/* Lexical toolbar */
+.rte-toolbar { 
+  display: flex; 
+  gap: 8px; 
+  margin: 4px 0 6px; 
+  align-items: center;
+}
+
+.rte-toolbar button, .rte-toolbar select { 
+  font-size: 12px; 
+  padding: 2px 6px; 
+}
+
+/* Normalize nodes so everything sits on the 12px grid */
+.rte-p { 
+  margin: 0; 
+  line-height: 12px; 
+}
+
+.rte-h { 
+  margin: 0; 
+  font-weight: 700; 
+  font-size: inherit; 
+  line-height: 12px; 
+}
+
+.rte-h1, .rte-h2, .rte-h3 { 
+  display: inline; /* keeps your retro inline look */ 
+}
+
+.rte-bold { 
+  font-weight: 700; 
+}
+
+.rte-italic { 
+  font-style: italic; 
+}
+
+.rte-underline { 
+  text-decoration: underline; 
+}
+
+.rte-placeholder { 
+  opacity: .5; 
+  padding: 12px; 
+  pointer-events: none; 
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 12px;
+}
+
 /* Catharsis Styles */
 .catharsis-window {
   position: fixed;
