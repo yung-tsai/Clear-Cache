@@ -249,7 +249,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
-  const formatText = (command: string) => {
+  const formatText = (command: 'bold' | 'italic' | 'underline' | 'h1' | 'h2' | 'h3') => {
     playSound('click');
     // Get the textarea element from the RichTextEditor
     const textarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
@@ -269,6 +269,15 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
             break;
           case 'underline':
             formattedText = `_${selectedText}_`;
+            break;
+          case 'h1':
+            formattedText = `# ${selectedText}`;
+            break;
+          case 'h2':
+            formattedText = `## ${selectedText}`;
+            break;
+          case 'h3':
+            formattedText = `### ${selectedText}`;
             break;
         }
         
@@ -370,6 +379,23 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           >
             <u>U</u>
           </button>
+          
+          <select
+            className="mac-input text-xs"
+            onChange={(e) => {
+              if (e.target.value !== 'normal') {
+                formatText(e.target.value as 'h1' | 'h2' | 'h3');
+                e.target.value = 'normal'; // Reset to normal after selection
+              }
+            }}
+            data-testid="select-text-format"
+            style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '80px', height: '24px' }}
+          >
+            <option value="normal">Normal</option>
+            <option value="h1">H1</option>
+            <option value="h2">H2</option>
+            <option value="h3">H3</option>
+          </select>
         </div>
       )}
       
@@ -382,6 +408,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           placeholder="Start writing your journal entry..."
           readOnly={readOnly}
           data-testid="textarea-content"
+          onFormat={formatText}
         />
       </div>
       

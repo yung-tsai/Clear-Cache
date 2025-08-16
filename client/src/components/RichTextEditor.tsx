@@ -12,6 +12,7 @@ interface RichTextEditorProps {
   placeholder?: string;
   readOnly?: boolean;
   'data-testid'?: string;
+  onFormat?: (command: 'bold' | 'italic' | 'underline' | 'h1' | 'h2' | 'h3') => void;
 }
 
 export default function RichTextEditor({ 
@@ -21,7 +22,8 @@ export default function RichTextEditor({
   catharsisItems = [],
   placeholder, 
   readOnly, 
-  'data-testid': testId 
+  'data-testid': testId,
+  onFormat
 }: RichTextEditorProps) {
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const { playSound } = useMacSounds();
@@ -49,15 +51,27 @@ export default function RichTextEditor({
       switch (e.key.toLowerCase()) {
         case 'b':
           e.preventDefault();
-          applyFormatting('**', '**', 'bold text');
+          if (onFormat) {
+            onFormat('bold');
+          } else {
+            applyFormatting('**', '**', 'bold text');
+          }
           return;
         case 'i':
           e.preventDefault();
-          applyFormatting('*', '*', 'italic text');
+          if (onFormat) {
+            onFormat('italic');
+          } else {
+            applyFormatting('*', '*', 'italic text');
+          }
           return;
         case 'u':
           e.preventDefault();
-          applyFormatting('_', '_', 'underlined text');
+          if (onFormat) {
+            onFormat('underline');
+          } else {
+            applyFormatting('_', '_', 'underlined text');
+          }
           return;
       }
     }
