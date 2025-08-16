@@ -350,12 +350,12 @@ Try these formatting options:
           data-testid={testId}
           style={{ 
             position: 'absolute',
-            top: 0,
-            left: 0,
+            top: '0px',
+            left: '0px',
             width: '100%',
             height: '100%',
             padding: '12px',
-            margin: 0,
+            margin: '0px',
             border: '1px solid var(--mac-black)',
             fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
             fontSize: '12px',
@@ -370,7 +370,8 @@ Try these formatting options:
             whiteSpace: 'pre-wrap',
             wordWrap: 'break-word',
             textRendering: 'optimizeSpeed',
-            fontKerning: 'none'
+            fontKerning: 'none',
+            letterSpacing: '0px'
           }}
         />
         <FormattedTextDisplay
@@ -378,12 +379,12 @@ Try these formatting options:
           className="live-preview-overlay"
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
+            top: '0px',
+            left: '0px',
             width: '100%',
             height: '100%',
             padding: '12px',
-            margin: 0,
+            margin: '0px',
             border: '1px solid transparent',
             fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
             fontSize: '12px',
@@ -395,7 +396,10 @@ Try these formatting options:
             wordWrap: 'break-word',
             overflow: 'hidden',
             minHeight: 'auto',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            textRendering: 'optimizeSpeed',
+            fontKerning: 'none',
+            letterSpacing: '0px'
           }}
         />
       </div>

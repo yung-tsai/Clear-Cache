@@ -147,11 +147,19 @@ export default function MacWindow({
         {children}
       </div>
       {onSizeChange && (
-        <div 
-          className="mac-window-resize-handle se"
-          onMouseDown={(e) => handleResize(e, 'se')}
-          data-testid="resize-handle"
-        />
+        <>
+          {/* Corner handles - invisible but functional */}
+          <div className="mac-window-resize-handle nw" onMouseDown={(e) => handleResize(e, 'nw')} data-testid="resize-nw" />
+          <div className="mac-window-resize-handle ne" onMouseDown={(e) => handleResize(e, 'ne')} data-testid="resize-ne" />
+          <div className="mac-window-resize-handle sw" onMouseDown={(e) => handleResize(e, 'sw')} data-testid="resize-sw" />
+          <div className="mac-window-resize-handle se" onMouseDown={(e) => handleResize(e, 'se')} data-testid="resize-se" />
+          
+          {/* Edge handles - invisible but functional */}
+          <div className="mac-window-resize-handle n" onMouseDown={(e) => handleResize(e, 'n')} data-testid="resize-n" />
+          <div className="mac-window-resize-handle s" onMouseDown={(e) => handleResize(e, 's')} data-testid="resize-s" />
+          <div className="mac-window-resize-handle e" onMouseDown={(e) => handleResize(e, 'e')} data-testid="resize-e" />
+          <div className="mac-window-resize-handle w" onMouseDown={(e) => handleResize(e, 'w')} data-testid="resize-w" />
+        </>
       )}
     </div>
   );
