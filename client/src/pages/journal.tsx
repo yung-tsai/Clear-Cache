@@ -93,6 +93,25 @@ export default function Journal() {
     onSearchEntries: handleSearchEntries
   });
 
+  // Keep windows in bounds when browser resizes
+  useEffect(() => {
+    const onResize = () => {
+      setWindows(ws => ws.map(w => {
+        const maxX = Math.max(0, window.innerWidth  - w.size.width);
+        const maxY = Math.max(0, window.innerHeight - w.size.height);
+        return { 
+          ...w, 
+          position: { 
+            x: Math.min(w.position.x, maxX), 
+            y: Math.min(w.position.y, maxY) 
+          } 
+        };
+      }));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Helper functions for z-order management
   const bringToFront = (windowId: string) => {
     setZStack(prev => [...prev.filter(id => id !== windowId), windowId]);
