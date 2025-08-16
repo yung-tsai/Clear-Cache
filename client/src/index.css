@@ -786,7 +786,7 @@
 /* Editor theme classes - for live editing */
 .rte-p { 
   margin: 0; 
-  line-height: 12px; 
+  line-height: 14px; 
 }
 
 .rte-h { 
@@ -816,7 +816,7 @@
 .rte-view {
   font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
   font-size: 12px;
-  line-height: 12px;
+  line-height: 14px;
   white-space: pre-wrap;
 }
 
@@ -842,7 +842,7 @@
 
 .rte-li { 
   margin: 0; 
-  line-height: 12px; 
+  line-height: 14px; 
   color: #000;
 }
 
@@ -863,7 +863,7 @@
 
 .rte-editable li, .rte-view li { 
   margin: 0; 
-  line-height: 12px; 
+  line-height: 14px; 
   color: #000;
 }
 

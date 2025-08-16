@@ -118,9 +118,19 @@ function HotkeysPlugin() {
       (event: KeyboardEvent) => {
         if (event.metaKey || event.ctrlKey) {
           const k = event.key.toLowerCase();
-          if (k === "b" || k === "i" || k === "u") {
+          if (k === "b") {
             event.preventDefault();
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, k as "bold"|"italic"|"underline");
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold");
+            return true;
+          }
+          if (k === "i") {
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic");
+            return true;
+          }
+          if (k === "u") {
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline");
             return true;
           }
         }
