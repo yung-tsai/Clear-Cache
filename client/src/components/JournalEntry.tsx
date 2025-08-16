@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { JournalEntry as JournalEntryType, InsertJournalEntry, CatharsisItem } from "@shared/schema";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import RichTextEditor from "@/components/RichTextEditor";
+import RichTextEditorLexical from "@/components/RichTextEditorLexical";
 import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
 import { Mic, MicOff, Save, X, Calendar, Clock, Tag, Trash2, Edit2, Heart } from "lucide-react";
@@ -249,83 +249,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     }
   };
 
-  const formatText = (command: 'bold' | 'italic' | 'underline' | 'h1' | 'h2' | 'h3') => {
-    playSound('click');
-    // Get the textarea element from the RichTextEditor
-    const textarea = document.querySelector('[data-testid="textarea-content"]') as HTMLTextAreaElement;
-    if (textarea) {
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = content.substring(start, end);
-      
-      if (selectedText) {
-        let formattedText = selectedText;
-        switch (command) {
-          case 'bold':
-            formattedText = `**${selectedText}**`;
-            break;
-          case 'italic':
-            formattedText = `*${selectedText}*`;
-            break;
-          case 'underline':
-            formattedText = `_${selectedText}_`;
-            break;
-          case 'h1':
-            formattedText = `# ${selectedText}`;
-            break;
-          case 'h2':
-            formattedText = `## ${selectedText}`;
-            break;
-          case 'h3':
-            formattedText = `### ${selectedText}`;
-            break;
-        }
-        
-        const newContent = content.substring(0, start) + formattedText + content.substring(end);
-        setContent(newContent);
-        
-        // Reset cursor position and focus
-        setTimeout(() => {
-          textarea.focus();
-          textarea.setSelectionRange(end + (formattedText.length - selectedText.length), end + (formattedText.length - selectedText.length));
-        }, 0);
-      } else {
-        // If no text is selected, insert placeholder text with formatting
-        let placeholder = '';
-        switch (command) {
-          case 'bold':
-            placeholder = '**bold text**';
-            break;
-          case 'italic':
-            placeholder = '*italic text*';
-            break;
-          case 'underline':
-            placeholder = '_underlined text_';
-            break;
-          case 'h1':
-            placeholder = '# Heading 1';
-            break;
-          case 'h2':
-            placeholder = '## Heading 2';
-            break;
-          case 'h3':
-            placeholder = '### Heading 3';
-            break;
-        }
-        
-        const newContent = content.substring(0, start) + placeholder + content.substring(end);
-        setContent(newContent);
-        
-        // Select the placeholder text for easy editing
-        setTimeout(() => {
-          textarea.focus();
-          const placeholderStart = command.startsWith('h') ? start + command.length + 1 : start + (command === 'bold' ? 2 : command === 'italic' ? 1 : 1);
-          const placeholderEnd = start + placeholder.length - (command.startsWith('h') ? 0 : command === 'bold' ? 2 : 1);
-          textarea.setSelectionRange(placeholderStart, placeholderEnd);
-        }, 0);
-      }
-    }
-  };
+
 
 
 
@@ -387,62 +311,14 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
 
       
-      {!readOnly && (
-        <div className="mac-toolbar">
-          <button
-            type="button"
-            className="mac-toolbar-btn"
-            onClick={() => formatText('bold')}
-            data-testid="button-bold"
-          >
-            <b>B</b>
-          </button>
-          <button
-            type="button"
-            className="mac-toolbar-btn"
-            onClick={() => formatText('italic')}
-            data-testid="button-italic"
-          >
-            <i>I</i>
-          </button>
-          <button
-            type="button"
-            className="mac-toolbar-btn"
-            onClick={() => formatText('underline')}
-            data-testid="button-underline"
-          >
-            <u>U</u>
-          </button>
-          
-          <select
-            className="mac-input text-xs"
-            onChange={(e) => {
-              if (e.target.value !== 'normal') {
-                formatText(e.target.value as 'h1' | 'h2' | 'h3');
-                e.target.value = 'normal'; // Reset to normal after selection
-              }
-            }}
-            data-testid="select-text-format"
-            style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '80px', height: '24px' }}
-          >
-            <option value="normal">Normal</option>
-            <option value="h1">H1</option>
-            <option value="h2">H2</option>
-            <option value="h3">H3</option>
-          </select>
-        </div>
-      )}
+
       
       <div className="flex-1 min-h-0 mb-4">
-        <RichTextEditor
+        <RichTextEditorLexical
           value={content}
           onChange={setContent}
-          onCatharsisUpdate={handleCatharsisUpdate}
-          catharsisItems={catharsisItems}
           placeholder="Start writing your journal entry..."
           readOnly={readOnly}
-          data-testid="textarea-content"
-          onFormat={formatText}
         />
       </div>
       
