@@ -7,6 +7,7 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { HeadingNode, $createHeadingNode } from "@lexical/rich-text";
+import { $setBlocksType } from "@lexical/selection";
 import {
   FORMAT_TEXT_COMMAND,
   $getSelection,
@@ -112,13 +113,10 @@ function Toolbar() {
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        const anchorNode = selection.anchor.getNode();
-        const element = anchorNode.getTopLevelElementOrThrow();
-        
         if (tag === "p") {
-          element.replace($createParagraphNode());
+          $setBlocksType(selection, () => $createParagraphNode());
         } else {
-          element.replace($createHeadingNode(tag));
+          $setBlocksType(selection, () => $createHeadingNode(tag));
         }
       }
     });

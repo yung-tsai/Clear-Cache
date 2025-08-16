@@ -783,7 +783,7 @@
   padding: 2px 6px; 
 }
 
-/* Normalize nodes so everything sits on the 12px grid */
+/* Editor theme classes - for live editing */
 .rte-p { 
   margin: 0; 
   line-height: 12px; 
@@ -810,6 +810,36 @@
 
 .rte-underline { 
   text-decoration: underline; 
+}
+
+/* Viewer styles for exported HTML semantic tags */
+.rte-view {
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 12px;
+  white-space: pre-wrap;
+}
+
+/* Keep headings on the 12px grid and bold (retro inline look) */
+.rte-view h1,
+.rte-view h2,
+.rte-view h3 {
+  display: inline;
+  margin: 0;
+  font-size: inherit;       /* no big sizes */
+  line-height: 12px;
+  font-weight: 700;
+}
+
+/* Formatting tags from export */
+.rte-view strong { font-weight: 700; }
+.rte-view em     { font-style: italic; }
+.rte-view u      { text-decoration: underline; }
+
+/* Force font synthesis for better bold rendering */
+.rte-editable, .rte-view {
+  font-synthesis-weight: auto;
+  font-synthesis-style: auto;
 }
 
 .rte-placeholder { 

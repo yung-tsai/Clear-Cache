@@ -1,0 +1,94 @@
+1) Saved HTML uses semantic tags, not your theme classes
+
+Lexical’s HTML export ($generateHtmlFromNodes) outputs <p>, <h1>, <h2>, <h3>, <strong>, <em>, <u>.
+Your CSS targets .rte-h, .rte-h1, .rte-bold (theme classes). Those classes do not appear in the saved HTML, so in the viewer nothing special is applied → headings look like normal text and “bold” doesn’t change.
+
+Fix (viewer CSS)
+
+Wrap your rendered HTML with a container class (e.g., rte-view) and style the semantic tags:
+
+// wherever you render a saved entry:
+<div className="rte-view" dangerouslySetInnerHTML={{ __html: entry.content }} />
+
+/* Viewer styles for exported HTML */
+.rte-view {
+  font-family: ChicagoFLFExact, Geneva, Arial, sans-serif;
+  font-size: 12px;
+  line-height: 12px;
+  white-space: pre-wrap;
+}
+
+/* Keep headings on the 12px grid and bold (retro inline look) */
+.rte-view h1,
+.rte-view h2,
+.rte-view h3 {
+  display: inline;
+  margin: 0;
+  font-size: inherit;       /* no big sizes */
+  line-height: 12px;
+  font-weight: 700;
+}
+
+/* Formatting tags from export */
+.rte-view strong { font-weight: 700; }
+.rte-view em     { font-style: italic; }
+.rte-view u      { text-decoration: underline; }
+
+
+Now your viewed entries will show bold/italic/underline and H1–H3 correctly.
+
+2) Bold may look “not bold” with ChicagoFLF
+
+Some bitmap/retro fonts ship only a regular weight. Browsers can still synthesize bold, but some setups don’t. Force synth bold and make it more visible:
+
+/* apply to both editor and viewer containers */
+.rte-editable, .rte-view {
+  font-synthesis-weight: auto;
+  font-synthesis-style: auto;
+}
+
+/* optional: heavier retro bold */
+.rte-view strong,
+.rte-editable strong { font-weight: 800; }
+
+
+If the font truly can’t embolden, consider falling back to Geneva/Arial for bold text only:
+
+.rte-view strong,
+.rte-editable strong {
+  font-family: Geneva, Arial, sans-serif;
+  font-weight: 700;
+}
+
+Small editor-side tidy (optional but better)
+
+Use Lexical’s helper to change block types (more robust than element.replace):
+
+import { $setBlocksType } from "@lexical/selection";
+import { HeadingNode, $createHeadingNode } from "@lexical/rich-text";
+import { $createParagraphNode, $getSelection, $isRangeSelection } from "lexical";
+
+function setBlock(tag: "p" | "h1" | "h2" | "h3") {
+  editor.update(() => {
+    const selection = $getSelection();
+    if ($isRangeSelection(selection)) {
+      if (tag === "p") {
+        $setBlocksType(selection, () => $createParagraphNode());
+      } else {
+        $setBlocksType(selection, () => $createHeadingNode(tag));
+      }
+    }
+  });
+}
+
+
+And keep your editor CSS for the live typing area (theme classes) as you already have:
+
+/* Editor */
+.rte-editable { /* …your existing 12px grid styles… */ }
+.rte-p { margin: 0; line-height: 12px; }
+.rte-h { margin: 0; font-weight: 700; font-size: inherit; line-height: 12px; }
+.rte-h1, .rte-h2, .rte-h3 { display: inline; }
+.rte-bold { font-weight: 700; }
+.rte-italic { font-style: italic; }
+.rte-underline { text-decoration: underline; }
