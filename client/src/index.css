@@ -825,16 +825,27 @@
 .rte-view em     { font-style: italic; }
 .rte-view u      { text-decoration: underline; }
 
-/* List styles for both editor and viewer */
-.rte-ul, .rte-view ul {
-  margin: 0;
-  padding-left: 16px;
-  list-style-type: disc;
+/* List styles - editor theme classes */
+.rte-ul, .rte-ol { 
+  margin: 0; 
+  padding-left: 18px; 
 }
 
-.rte-view li {
-  margin: 0;
-  line-height: 12px;
+.rte-li { 
+  margin: 0; 
+  line-height: 12px; 
+}
+
+/* Also style semantic tags (for saved HTML and in-editor) */
+.rte-editable ul, .rte-editable ol,
+.rte-view ul, .rte-view ol { 
+  margin: 0; 
+  padding-left: 18px; 
+}
+
+.rte-editable li, .rte-view li { 
+  margin: 0; 
+  line-height: 12px; 
 }
 
 /* Force font synthesis for better bold rendering */

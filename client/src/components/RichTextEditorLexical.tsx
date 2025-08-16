@@ -8,11 +8,12 @@ import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ListNode, ListItemNode } from "@lexical/list";
-import { $createListNode, $createListItemNode } from "@lexical/list";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { TRANSFORMERS } from "@lexical/markdown";
 import {
+  KEY_DOWN_COMMAND,
+  COMMAND_PRIORITY_LOW,
   FORMAT_TEXT_COMMAND,
-  $getSelection,
-  $isRangeSelection,
   $createParagraphNode,
   $getRoot,
 } from "lexical";
@@ -46,6 +47,7 @@ export default function RichTextEditorLexical({
         list: {
           ul: "rte-ul",
           ol: "rte-ol",
+          listitem: "rte-li",
         },
       },
       onError: (e: unknown) => console.error(e),
@@ -63,7 +65,8 @@ export default function RichTextEditorLexical({
       />
       <HistoryPlugin />
       <ListPlugin />
-      <KeyboardShortcutsPlugin />
+      <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+      <HotkeysPlugin />
       <LoadInitialOnce html={initialHTML} />
       <OnChangePlugin
         onChange={(editorState, editor) => {
@@ -105,65 +108,26 @@ function LoadInitialOnce({ html }: { html: string }) {
   return null;
 }
 
-// Keyboard shortcuts plugin for Bold/Italic/Underline and List creation
-function KeyboardShortcutsPlugin() {
+// Only keep Cmd/Ctrl+B/I/U hotkeys - markdown shortcuts handle lists
+function HotkeysPlugin() {
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Handle Cmd/Ctrl shortcuts
-      if (event.metaKey || event.ctrlKey) {
-        switch (event.key.toLowerCase()) {
-          case 'b':
+    return editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event: KeyboardEvent) => {
+        if (event.metaKey || event.ctrlKey) {
+          const k = event.key.toLowerCase();
+          if (k === "b" || k === "i" || k === "u") {
             event.preventDefault();
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
-            break;
-          case 'i':
-            event.preventDefault();
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-            break;
-          case 'u':
-            event.preventDefault();
-            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
-            break;
-        }
-      }
-      
-      // Handle "- " (dash + space) for bullet lists
-      if (event.key === ' ') {
-        editor.update(() => {
-          const selection = $getSelection();
-          if ($isRangeSelection(selection)) {
-            const anchorNode = selection.anchor.getNode();
-            const textContent = anchorNode.getTextContent();
-            
-            // Check if the line starts with "- " (dash + space)
-            if (textContent === '- ' && selection.anchor.offset === 2) {
-              event.preventDefault();
-              
-              // Create bullet list
-              const listNode = $createListNode("bullet");
-              const listItemNode = $createListItemNode();
-              listNode.append(listItemNode);
-              
-              const element = anchorNode.getTopLevelElementOrThrow();
-              element.replace(listNode);
-              
-              // Clear the "- " text and focus the list item
-              listItemNode.select();
-            }
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, k as "bold"|"italic"|"underline");
+            return true;
           }
-        });
-      }
-    };
-
-    const editorElement = editor.getElementByKey("root");
-    if (editorElement) {
-      editorElement.addEventListener('keydown', handleKeyDown);
-      return () => {
-        editorElement.removeEventListener('keydown', handleKeyDown);
-      };
-    }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
   }, [editor]);
 
   return null;

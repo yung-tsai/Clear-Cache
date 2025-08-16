@@ -1,0 +1,73 @@
+Install markdown shortcuts
+
+npm i @lexical/markdown
+
+
+Use Markdown + List plugins; remove your custom “space” code
+
+// + imports
+import { ListNode, ListItemNode } from "@lexical/list";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { TRANSFORMERS } from "@lexical/markdown";
+
+import {
+  KEY_DOWN_COMMAND,
+  COMMAND_PRIORITY_LOW,
+  FORMAT_TEXT_COMMAND,
+} from "lexical";
+
+// initialConfig: register list nodes + theme
+nodes: [ListNode, ListItemNode],
+theme: {
+  paragraph: "rte-p",
+  text: { bold: "rte-bold", italic: "rte-italic", underline: "rte-underline" },
+  list: { ul: "rte-ul", ol: "rte-ol", listitem: "rte-li" }, // add listitem
+},
+
+// inside <LexicalComposer>
+<RichTextPlugin ... />
+<HistoryPlugin />
+<ListPlugin />                            {/* Enter/Backspace/Tab in lists */}
+<MarkdownShortcutPlugin transformers={TRANSFORMERS} /> {/* "- ", "1. ", "# " */}
+<HotkeysPlugin />                        {/* B/I/U only */}
+<LoadInitialOnce html={initialHTML} />
+<OnChangePlugin ... />
+
+// Only keep Cmd/Ctrl+B/I/U in a tiny plugin; no "- " logic
+function HotkeysPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_DOWN_COMMAND,
+      (event: KeyboardEvent) => {
+        if (event.metaKey || event.ctrlKey) {
+          const k = event.key.toLowerCase();
+          if (k === "b" || k === "i" || k === "u") {
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, k as "bold"|"italic"|"underline");
+            return true;
+          }
+        }
+        return false;
+      },
+      COMMAND_PRIORITY_LOW
+    );
+  }, [editor]);
+
+  return null;
+}
+
+
+CSS (editor + viewer)
+
+/* editor theme classes */
+.rte-ul, .rte-ol { margin: 0; padding-left: 18px; }
+.rte-li { margin: 0; line-height: 12px; }
+
+/* also style semantic tags (for saved HTML and in-editor) */
+.rte-editable ul, .rte-editable ol,
+.rte-view ul, .rte-view ol { margin: 0; padding-left: 18px; }
+.rte-editable li, .rte-view li { margin: 0; line-height: 12px; }
