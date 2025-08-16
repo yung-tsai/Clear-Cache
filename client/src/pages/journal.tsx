@@ -87,6 +87,8 @@ export default function Journal() {
     };
     setWindows(prev => [...prev, newWindow]);
     setNextZIndex(prev => prev + 1);
+    // Auto-focus the new window after a brief delay
+    setTimeout(() => bringToFront(windowId), 50);
   }
 
   function handleSearchEntries() {
@@ -102,6 +104,8 @@ export default function Journal() {
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
     setNextZIndex(prev => prev + 1);
+    // Auto-focus the search window after a brief delay
+    setTimeout(() => bringToFront('search'), 50);
   }
 
   function handleShowGratitudePrompts() {
@@ -150,6 +154,8 @@ export default function Journal() {
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'gratitude'), gratitudeWindow]);
     setNextZIndex(prev => prev + 1);
+    // Auto-focus the gratitude window after a brief delay
+    setTimeout(() => bringToFront('gratitude'), 50);
   }
 
   function handleShowMoodTrends() {
@@ -165,15 +171,18 @@ export default function Journal() {
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'trends'), trendsWindow]);
     setNextZIndex(prev => prev + 1);
+    // Auto-focus the trends window after a brief delay
+    setTimeout(() => bringToFront('trends'), 50);
   }
 
   function handleViewEntry(entryId: string, title: string) {
     playSound('click');
+    const windowId = `view-${entryId}`;
     const viewWindow = {
-      id: `view-${entryId}`,
+      id: windowId,
       type: 'view' as const,
       title: `View: ${title}`,
-      component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(`view-${entryId}`)} />,
+      component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(windowId)} />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 700, height: 600 },
       zIndex: nextZIndex,
@@ -181,6 +190,8 @@ export default function Journal() {
     };
     setWindows(prev => [...prev.filter(w => w.entryId !== entryId), viewWindow]);
     setNextZIndex(prev => prev + 1);
+    // Auto-focus the view window after a brief delay
+    setTimeout(() => bringToFront(windowId), 50);
   }
 
   function handleSaveEntry() {
