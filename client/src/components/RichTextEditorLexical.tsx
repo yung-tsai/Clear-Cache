@@ -9,7 +9,7 @@ import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ListNode, ListItemNode } from "@lexical/list";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
-import { TRANSFORMERS } from "@lexical/markdown";
+import { UNORDERED_LIST, ORDERED_LIST } from "@lexical/markdown";
 import {
   KEY_DOWN_COMMAND,
   COMMAND_PRIORITY_LOW,
@@ -65,7 +65,7 @@ export default function RichTextEditorLexical({
       />
       <HistoryPlugin />
       <ListPlugin />
-      <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
+      <MarkdownShortcutPlugin transformers={[UNORDERED_LIST, ORDERED_LIST]} />
       <HotkeysPlugin />
       <LoadInitialOnce html={initialHTML} />
       <OnChangePlugin
