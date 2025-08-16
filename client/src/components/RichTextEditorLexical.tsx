@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, forwardRef, useImperativeHandle } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
@@ -14,10 +14,19 @@ import {
   KEY_DOWN_COMMAND,
   COMMAND_PRIORITY_LOW,
   FORMAT_TEXT_COMMAND,
+  $getSelection, 
+  $isRangeSelection,
   $createParagraphNode,
   $getRoot,
+  INSERT_PARAGRAPH_COMMAND,
 } from "lexical";
 import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+
+export type RichTextEditorHandle = {
+  focus: () => void;
+  insertText: (text: string) => void;
+  insertParagraph: () => void;
+};
 
 type Props = {
   initialHTML?: string;
@@ -26,12 +35,10 @@ type Props = {
   readOnly?: boolean;
 };
 
-export default function RichTextEditorLexical({
-  initialHTML = "",
-  onChange,
-  placeholder = "Start typing…",
-  readOnly,
-}: Props) {
+const RichTextEditorLexical = forwardRef<RichTextEditorHandle, Props>(function RTE(
+  { initialHTML = "", onChange, placeholder = "Start typing…", readOnly }: Props,
+  ref
+) {
   const initialConfig = useMemo(
     () => ({
       namespace: "retro-journal",
@@ -68,6 +75,7 @@ export default function RichTextEditorLexical({
       <MarkdownShortcutPlugin transformers={[UNORDERED_LIST, ORDERED_LIST]} />
       <HotkeysPlugin />
       <LoadInitialOnce html={initialHTML} />
+      <ExposeAPI ref={ref} />
       <OnChangePlugin
         onChange={(editorState, editor) => {
           editorState.read(() => {
@@ -78,7 +86,9 @@ export default function RichTextEditorLexical({
       />
     </LexicalComposer>
   );
-}
+});
+
+export default RichTextEditorLexical;
 
 function LoadInitialOnce({ html }: { html: string }) {
   const [editor] = useLexicalComposerContext();
@@ -107,6 +117,25 @@ function LoadInitialOnce({ html }: { html: string }) {
 
   return null;
 }
+
+const ExposeAPI = forwardRef<RichTextEditorHandle>(function ExposeAPI(_, ref) {
+  const [editor] = useLexicalComposerContext();
+
+  useImperativeHandle(ref, () => ({
+    focus: () => editor.focus(),
+    insertParagraph: () => editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined),
+    insertText: (text: string) => {
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel)) {
+          sel.insertText(text);
+        }
+      });
+    },
+  }), [editor]);
+
+  return null;
+});
 
 // Only keep Cmd/Ctrl+B/I/U hotkeys - markdown shortcuts handle lists
 function HotkeysPlugin() {

@@ -1,0 +1,196 @@
+You’re appending text to your React content state, but the Lexical editor doesn’t re-import that state (by design—we fixed the reimport loop earlier). So nothing shows up.
+You need to insert the transcript into the Lexical document via the editor API.
+
+Here’s a clean, working setup.
+
+1) Expose a tiny API from the editor (insert text / focus)
+
+Patch your RichTextEditorLexical.tsx to export an imperative handle.
+
+// RichTextEditorLexical.tsx
+import React, {
+  useMemo, useEffect, useRef, forwardRef, useImperativeHandle
+} from "react";
+import { LexicalComposer } from "@lexical/react/LexicalComposer";
+import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
+import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { ContentEditable } from "@lexical/react/LexicalContentEditable";
+import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
+import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
+import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { ListNode, ListItemNode } from "@lexical/list";
+import {
+  FORMAT_TEXT_COMMAND,
+  $getSelection, $isRangeSelection,
+  $createParagraphNode, $getRoot,
+  INSERT_PARAGRAPH_COMMAND,
+} from "lexical";
+import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
+
+export type RichTextEditorHandle = {
+  focus: () => void;
+  insertText: (text: string) => void;
+  insertParagraph: () => void;
+};
+
+type Props = {
+  initialHTML?: string;
+  onChange?: (html: string) => void;
+  placeholder?: string;
+  readOnly?: boolean;
+};
+
+const RichTextEditorLexical = forwardRef<RichTextEditorHandle, Props>(function RTE(
+  { initialHTML = "", onChange, placeholder = "Start typing…", readOnly }: Props,
+  ref
+) {
+  const initialConfig = useMemo(
+    () => ({
+      namespace: "retro-journal",
+      editable: !readOnly,
+      nodes: [ListNode, ListItemNode],
+      theme: {
+        paragraph: "rte-p",
+        text: { bold: "rte-bold", italic: "rte-italic", underline: "rte-underline" },
+        list: { ul: "rte-ul", ol: "rte-ol", listitem: "rte-li" },
+      },
+      onError: (e: unknown) => console.error(e),
+    }),
+    [readOnly]
+  );
+
+  return (
+    <LexicalComposer initialConfig={initialConfig}>
+      <RichTextPlugin
+        contentEditable={<ContentEditable className="rte-editable" />}
+        placeholder={<div className="rte-placeholder">{placeholder}</div>}
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <HistoryPlugin />
+      <LoadInitialOnce html={initialHTML} />
+      <ExposeAPI ref={ref} />
+      <OnChangePlugin
+        onChange={(editorState, editor) => {
+          editorState.read(() => {
+            const html = $generateHtmlFromNodes(editor);
+            onChange?.(html);
+          });
+        }}
+      />
+    </LexicalComposer>
+  );
+});
+
+export default RichTextEditorLexical;
+
+function LoadInitialOnce({ html }: { html: string }) {
+  const [editor] = useLexicalComposerContext();
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    if (!html) return;
+
+    editor.update(() => {
+      const parser = new DOMParser();
+      const dom = parser.parseFromString(html, "text/html");
+      const nodes = $generateNodesFromDOM(editor, dom);
+      const root = $getRoot();
+      root.clear();
+      root.append(...(nodes.length ? nodes : [$createParagraphNode()]));
+    });
+  }, [editor, html]);
+
+  return null;
+}
+
+const ExposeAPI = forwardRef<RichTextEditorHandle>(function ExposeAPI(_, ref) {
+  const [editor] = useLexicalComposerContext();
+
+  useImperativeHandle(ref, () => ({
+    focus: () => editor.focus(),
+    insertParagraph: () => editor.dispatchCommand(INSERT_PARAGRAPH_COMMAND, undefined),
+    insertText: (text: string) => {
+      editor.update(() => {
+        const sel = $getSelection();
+        if ($isRangeSelection(sel)) {
+          sel.insertText(text);
+        }
+      });
+    },
+  }), [editor]);
+
+  return null;
+});
+
+
+Now the parent can call editorRef.current?.insertText("...") and it will appear at the caret.
+
+2) Use that API from your voice-to-text code
+
+In your JournalEntry component:
+
+import RichTextEditorLexical, { RichTextEditorHandle } from "@/components/RichTextEditorLexical";
+
+const editorRef = useRef<RichTextEditorHandle>(null);
+
+// ... inside JSX:
+<RichTextEditorLexical
+  key={currentEntryId ?? "new"}
+  initialHTML={entry?.content ?? ""}
+  onChange={setContent}             // keeps your HTML up to date for saving
+  ref={editorRef}
+/>
+
+
+Then change the speech code so it inserts into the editor, not setContent(...):
+
+recognition.onstart = () => {
+  setIsRecording(true);
+  editorRef.current?.focus(); // put caret in the editor
+};
+
+recognition.onend = () => {
+  setIsRecording(false);
+  const text = finalTranscript.trim();
+  if (text) {
+    // put the transcript on a fresh paragraph, then insert text
+    editorRef.current?.insertParagraph();
+    editorRef.current?.insertText(text);
+  }
+  playSound('click');
+};
+
+
+If you want live updates while speaking, set recognition.interimResults = true and, inside onresult, whenever you get an isFinal result, call insertText for that chunk (with a leading space if needed).
+
+3) Common “it doesn’t start recording” gotchas
+
+Iframe permissions: Replit’s preview can be inside an iframe that blocks the mic. Open your app in a new tab/window (top-level origin) and allow microphone.
+
+HTTPS required: Web Speech needs secure context. Replit is HTTPS; ensure you’re not on a http://localhost tunnel.
+
+Browser support: Works best in Chrome/Edge. Safari uses webkitSpeechRecognition. Mobile Safari support is spotty.
+
+User gesture: Start must be triggered by a click/tap (your button does that).
+
+Brave/Privacy blockers: Shields or extensions can block mic—allow mic for your domain.
+
+Add quick diagnostics:
+
+recognition.onaudiostart = () => console.log('audio start');
+recognition.onsoundstart = () => console.log('sound start');
+recognition.onspeechstart = () => console.log('speech start');
+recognition.onaudioend = () => console.log('audio end');
+recognition.onerror = (e)=> console.log('error', e.error);
+
+
+If none of these fire, it’s permission/iframe.
+
+4) Save/view flow stays the same
+
+onChange still gives you HTML; your “Save Entry” persists that HTML.
+The “View” page should render with:
+
+<div className="rte-view" dangerouslySetInnerHTML={{ __html: content }} />

@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import type { JournalEntry as JournalEntryType, InsertJournalEntry, CatharsisItem } from "@shared/schema";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import RichTextEditorLexical from "@/components/RichTextEditorLexical";
+import RichTextEditorLexical, { RichTextEditorHandle } from "@/components/RichTextEditorLexical";
 import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
 import { Mic, MicOff, Save, X, Calendar, Clock, Trash2, Edit2, Heart } from "lucide-react";
@@ -97,7 +97,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
   // Voice-to-text functionality using Web Speech API
   const recognitionRef = useRef<any>(null);
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<RichTextEditorHandle>(null);
   
   const toggleVoiceRecording = async () => {
     if (isRecording) {
@@ -116,7 +116,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         
         if (!SpeechRecognition) {
           const errorText = "Speech recognition not supported in this browser. Please type your entry manually.";
-          setContent(prev => prev ? prev + '\n\n' + errorText : errorText);
+          editorRef.current?.insertParagraph();
+          editorRef.current?.insertText(errorText);
           return;
         }
 
@@ -130,6 +131,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         
         recognition.onstart = () => {
           setIsRecording(true);
+          editorRef.current?.focus(); // put caret in the editor
         };
         
         recognition.onresult = (event: any) => {
@@ -142,18 +144,12 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
         
         recognition.onend = () => {
           setIsRecording(false);
-          
-          if (finalTranscript.trim()) {
-            // Append the transcription to existing content
-            setContent(prev => {
-              if (prev && prev.trim()) {
-                return prev + '\n\n' + finalTranscript.trim();
-              } else {
-                return finalTranscript.trim();
-              }
-            });
+          const text = finalTranscript.trim();
+          if (text) {
+            // Insert the transcript into the editor directly
+            editorRef.current?.insertParagraph();
+            editorRef.current?.insertText(text);
           }
-          
           playSound('click');
         };
         
@@ -164,7 +160,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           
           if (event.error === 'no-speech') {
             const message = "No speech detected. Please try again.";
-            setContent(prev => prev ? prev + '\n\n' + message : message);
+            editorRef.current?.insertParagraph();
+            editorRef.current?.insertText(message);
           }
         };
         
@@ -262,6 +259,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
           onChange={setContent}
           placeholder="Start writing your journal entry..."
           readOnly={readOnly}
+          ref={editorRef}
         />
       </div>
       
