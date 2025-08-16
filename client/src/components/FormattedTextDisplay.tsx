@@ -47,6 +47,7 @@ export default function FormattedTextDisplay({ content, className = '', 'data-te
         fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
         fontSize: '12px',
         fontWeight: 'normal',
+        color: 'black',
         ...style
       }}
     />

@@ -380,6 +380,7 @@ Try these formatting options:
           style={{ 
             position: 'absolute',
             color: 'transparent',
+            backgroundColor: 'transparent',
             caretColor: 'black',
             zIndex: 2
           }}

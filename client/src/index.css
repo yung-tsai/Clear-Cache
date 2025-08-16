@@ -1104,6 +1104,7 @@
   overflow-wrap: break-word !important;
   background: var(--mac-white) !important;
   border: 1px solid var(--mac-black) !important;
+  color: black !important;
 }
 
 .formatted-h1 {
