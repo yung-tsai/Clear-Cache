@@ -1069,6 +1069,54 @@
   text-decoration: underline;
 }
 
+/* Formatted text display styles */
+.formatted-text-display {
+  font-family: 'Monaco', 'Lucida Console', monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 12px;
+  min-height: 150px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  background: var(--mac-white);
+  border: 1px solid var(--mac-black);
+}
+
+.formatted-h1 {
+  font-size: 18px !important;
+  font-weight: bold !important;
+  margin: 8px 0 4px 0 !important;
+  border-bottom: 2px solid #000 !important;
+  display: block !important;
+}
+
+.formatted-h2 {
+  font-size: 16px !important;
+  font-weight: bold !important;
+  margin: 6px 0 3px 0 !important;
+  border-bottom: 1px solid #000 !important;
+  display: block !important;
+}
+
+.formatted-h3 {
+  font-size: 14px !important;
+  font-weight: bold !important;
+  margin: 4px 0 2px 0 !important;
+  display: block !important;
+}
+
+.formatted-bold {
+  font-weight: bold !important;
+}
+
+.formatted-italic {
+  font-style: italic !important;
+}
+
+.formatted-underline {
+  text-decoration: underline !important;
+}
+
 .rich-text-editor .bold {
   font-weight: bold;
 }

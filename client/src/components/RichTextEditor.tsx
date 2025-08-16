@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { Heart } from "lucide-react";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import StressLevelPopover from "./StressLevelPopover";
+import FormattedTextDisplay from "./FormattedTextDisplay";
 import type { CatharsisItem } from "@shared/schema";
 
 interface RichTextEditorProps {
@@ -336,23 +337,10 @@ export default function RichTextEditor({
   };
 
   if (readOnly) {
-    const htmlContent = convertToHtml(value);
     return (
-      <div 
-        className="rich-text-display"
-        dangerouslySetInnerHTML={{ __html: htmlContent }}
+      <FormattedTextDisplay
+        content={value}
         data-testid={testId}
-        style={{
-          fontFamily: 'Monaco, "Lucida Console", monospace',
-          fontSize: '11px',
-          lineHeight: '1.4',
-          padding: '12px',
-          minHeight: '150px',
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'break-word',
-          background: 'var(--mac-white)',
-          border: '1px solid var(--mac-black)'
-        }}
       />
     );
   }
