@@ -42,6 +42,11 @@ export default function FormattedTextDisplay({ content, className = '', 'data-te
       className={`formatted-text-display ${className}`}
       dangerouslySetInnerHTML={{ __html: htmlContent }}
       data-testid={testId}
+      style={{
+        fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+        fontSize: '12px',
+        fontWeight: 'normal'
+      }}
     />
   );
 }

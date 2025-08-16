@@ -1071,8 +1071,8 @@
 
 /* Formatted text display styles */
 .formatted-text-display {
-  font-family: 'Monaco', 'Lucida Console', monospace !important;
-  font-size: 11px !important;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
+  font-size: 12px !important;
   line-height: 1.4 !important;
   padding: 12px !important;
   min-height: 150px !important;
@@ -1105,22 +1105,36 @@
   display: block !important;
 }
 
-.formatted-text-display .formatted-bold, 
+/* Force bold styling with multiple approaches */
+.formatted-text-display strong,
+.formatted-text-display .formatted-bold,
+strong.formatted-bold {
+  font-weight: 900 !important;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
+  text-shadow: 0.5px 0 0 currentColor, 0.5px 0.5px 0 currentColor !important;
+  -webkit-text-stroke: 0.3px !important;
+}
+
+/* Also target any strong tag inside formatted display */
+.formatted-text-display * {
+  font-family: inherit !important;
+}
+
 .formatted-text-display strong {
-  font-weight: bold !important;
-  font-family: inherit !important;
+  font-weight: 900 !important;
+  text-shadow: 0.5px 0 0 currentColor, 0.5px 0.5px 0 currentColor !important;
 }
 
-.formatted-text-display .formatted-italic,
-.formatted-text-display em {
+.formatted-text-display em,
+.formatted-text-display .formatted-italic {
   font-style: italic !important;
-  font-family: inherit !important;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
 }
 
-.formatted-text-display .formatted-underline,
-.formatted-text-display u {
+.formatted-text-display u,
+.formatted-text-display .formatted-underline {
   text-decoration: underline !important;
-  font-family: inherit !important;
+  font-family: 'Chicago', 'ChicagoFLF', 'Geneva', 'Arial', sans-serif !important;
 }
 
 .rich-text-editor .bold {
