@@ -65,3 +65,8 @@ Preferred communication style: Simple, everyday language.
 - Enhanced sound system with authentic Mac effects: window open/close, trash sound, menu dropdown, success chimes, and alert beeps
 - Added classic Mac screensaver backgrounds: Flying Toasters, Starfield, Maze, and Aqua Bubbles with animated CSS effects
 - Implemented smooth window animations for opening and closing windows with proper Mac-style transitions
+- **Migrated to Lexical rich text editor** with proper markdown shortcuts and list functionality (August 16, 2025)
+- **Fixed bullet list functionality** using @lexical/markdown with "- " shortcut for automatic list creation
+- **Restored keyboard shortcuts** for bold (Cmd/Ctrl+B), italic (Cmd/Ctrl+I), and underline (Cmd/Ctrl+U)
+- **Improved text readability** by increasing line height from 12px to 14px for better spacing
+- **Enhanced list styling** with visible bullet points and proper indentation for both editor and viewer
