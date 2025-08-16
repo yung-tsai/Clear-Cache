@@ -2,12 +2,13 @@ import { useMemo, useEffect, useRef } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { HeadingNode, $createHeadingNode } from "@lexical/rich-text";
-import { $setBlocksType } from "@lexical/selection";
+import { ListNode, ListItemNode } from "@lexical/list";
+import { $createListNode, $createListItemNode } from "@lexical/list";
 import {
   FORMAT_TEXT_COMMAND,
   $getSelection,
@@ -34,7 +35,7 @@ export default function RichTextEditorLexical({
     () => ({
       namespace: "retro-journal",
       editable: !readOnly,
-      nodes: [HeadingNode],
+      nodes: [ListNode, ListItemNode],
       theme: {
         paragraph: "rte-p",
         text: {
@@ -42,10 +43,9 @@ export default function RichTextEditorLexical({
           italic: "rte-italic",
           underline: "rte-underline",
         },
-        heading: {
-          h1: "rte-h rte-h1",
-          h2: "rte-h rte-h2",
-          h3: "rte-h rte-h3",
+        list: {
+          ul: "rte-ul",
+          ol: "rte-ol",
         },
       },
       onError: (e: unknown) => console.error(e),
@@ -62,6 +62,8 @@ export default function RichTextEditorLexical({
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
+      <ListPlugin />
+      <KeyboardShortcutsPlugin />
       <LoadInitialOnce html={initialHTML} />
       <OnChangePlugin
         onChange={(editorState, editor) => {
@@ -103,21 +105,58 @@ function LoadInitialOnce({ html }: { html: string }) {
   return null;
 }
 
+// Keyboard shortcuts plugin for Bold/Italic/Underline
+function KeyboardShortcutsPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey) {
+        switch (event.key.toLowerCase()) {
+          case 'b':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
+            break;
+          case 'i':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
+            break;
+          case 'u':
+            event.preventDefault();
+            editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline');
+            break;
+        }
+      }
+    };
+
+    const editorElement = editor.getElementByKey("root");
+    if (editorElement) {
+      editorElement.addEventListener('keydown', handleKeyDown);
+      return () => {
+        editorElement.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [editor]);
+
+  return null;
+}
+
 function Toolbar() {
   const [editor] = useLexicalComposerContext();
 
-  const toggle = (cmd: "bold" | "italic" | "underline") =>
-    editor.dispatchCommand(FORMAT_TEXT_COMMAND, cmd);
-
-  const setBlock = (tag: "p" | "h1" | "h2" | "h3") => {
+  const createBulletList = () => {
     editor.update(() => {
       const selection = $getSelection();
       if ($isRangeSelection(selection)) {
-        if (tag === "p") {
-          $setBlocksType(selection, () => $createParagraphNode());
-        } else {
-          $setBlocksType(selection, () => $createHeadingNode(tag));
-        }
+        const listNode = $createListNode("bullet");
+        const listItemNode = $createListItemNode();
+        listNode.append(listItemNode);
+        
+        const anchorNode = selection.anchor.getNode();
+        const element = anchorNode.getTopLevelElementOrThrow();
+        element.replace(listNode);
+        
+        listItemNode.select();
       }
     });
   };
@@ -127,44 +166,12 @@ function Toolbar() {
       <button 
         type="button" 
         className="mac-toolbar-btn"
-        onClick={() => toggle("bold")}
-        data-testid="button-bold"
+        onClick={createBulletList}
+        data-testid="button-bullet-list"
+        title="Create bullet list"
       >
-        <b>B</b>
+        • List
       </button>
-      <button 
-        type="button" 
-        className="mac-toolbar-btn"
-        onClick={() => toggle("italic")}
-        data-testid="button-italic"
-      >
-        <i>I</i>
-      </button>
-      <button 
-        type="button" 
-        className="mac-toolbar-btn"
-        onClick={() => toggle("underline")}
-        data-testid="button-underline"
-      >
-        <u>U</u>
-      </button>
-      <select
-        className="mac-input text-xs"
-        defaultValue="p"
-        onChange={(e) => {
-          if (e.target.value !== "p") {
-            setBlock(e.target.value as "p" | "h1" | "h2" | "h3");
-            e.target.value = "p"; // Reset to normal
-          }
-        }}
-        data-testid="select-text-format"
-        style={{ fontFamily: 'Monaco, monospace', fontSize: '10px', width: '80px', height: '24px' }}
-      >
-        <option value="p">Normal</option>
-        <option value="h1">H1</option>
-        <option value="h2">H2</option>
-        <option value="h3">H3</option>
-      </select>
     </div>
   );
 }

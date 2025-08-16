@@ -820,21 +820,22 @@
   white-space: pre-wrap;
 }
 
-/* Keep headings on the 12px grid and bold (retro inline look) */
-.rte-view h1,
-.rte-view h2,
-.rte-view h3 {
-  display: inline;
-  margin: 0;
-  font-size: inherit;       /* no big sizes */
-  line-height: 12px;
-  font-weight: 700;
-}
-
 /* Formatting tags from export */
 .rte-view strong { font-weight: 700; }
 .rte-view em     { font-style: italic; }
 .rte-view u      { text-decoration: underline; }
+
+/* List styles for both editor and viewer */
+.rte-ul, .rte-view ul {
+  margin: 0;
+  padding-left: 16px;
+  list-style-type: disc;
+}
+
+.rte-view li {
+  margin: 0;
+  line-height: 12px;
+}
 
 /* Force font synthesis for better bold rendering */
 .rte-editable, .rte-view {
