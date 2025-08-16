@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useRef } from "react";
+import { ReactNode } from "react";
 import { useDraggable } from "@/hooks/useDraggable";
 import { useMacSounds } from "@/hooks/useMacSounds";
 
@@ -27,25 +27,19 @@ export default function MacWindow({
   onSizeChange,
   'data-testid': testId
 }: MacWindowProps) {
-  // All hooks must be at the top level and in consistent order
   const { playSound } = useMacSounds();
-  const winRef = useRef<HTMLDivElement>(null);
   
-  // Keep the window fully inside viewport
-  const clamp = useMemo(() => {
-    return ({ x, y }: { x: number; y: number }) => {
-      const maxX = Math.max(0, window.innerWidth  - size.width);
-      const maxY = Math.max(0, window.innerHeight - size.height);
-      return { x: Math.min(Math.max(0, x), maxX), y: Math.min(Math.max(0, y), maxY) };
-    };
-  }, [size.width, size.height]);
-
-  const drag = useDraggable({
-    getElement: () => winRef.current,
-    onDrag: (p) => onPositionChange(clamp(p)),
-    onDragStart: () => { onFocus(); playSound('click'); },
-    clamp,
+  const { ref, isDragging } = useDraggable({
+    onDrag: onPositionChange,
+    onDragStart: () => {
+      onFocus();
+      playSound('click');
+    }
   });
+
+  const handleMouseDown = () => {
+    onFocus();
+  };
 
   const handleClose = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -61,74 +55,74 @@ export default function MacWindow({
     // TODO: Implement minimize functionality
   };
 
-  function handleResize(e: React.MouseEvent, direction: string) {
+  const handleResize = (e: React.MouseEvent, direction: string) => {
     if (!onSizeChange) return;
-    e.preventDefault(); 
+    
+    e.preventDefault();
     e.stopPropagation();
-
+    
     const startX = e.clientX;
     const startY = e.clientY;
-    const startW = size.width;
-    const startH = size.height;
-    const startXPos = position.x;
-    const startYPos = position.y;
+    const startWidth = size.width;
+    const startHeight = size.height;
+    const startPosX = position.x;
+    const startPosY = position.y;
 
-    const onMove = (ev: MouseEvent) => {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
-
-      let newW = startW;
-      let newH = startH;
-      let newX = startXPos;
-      let newY = startYPos;
-
-      if (direction.includes('e')) newW = Math.max(320, startW + dx);
-      if (direction.includes('s')) newH = Math.max(220, startH + dy);
-      if (direction.includes('w')) { newW = Math.max(320, startW - dx); newX = startXPos + (startW - newW); }
-      if (direction.includes('n')) { newH = Math.max(220, startH - dy); newY = startYPos + (startH - newH); }
-
-      // clamp to viewport
-      const maxX = Math.max(0, window.innerWidth  - newW);
-      const maxY = Math.max(0, window.innerHeight - newH);
-      newX = Math.min(Math.max(0, newX), maxX);
-      newY = Math.min(Math.max(0, newY), maxY);
-
-      onSizeChange!({ width: newW, height: newH });
-      onPositionChange({ x: newX, y: newY });
+    const handleMouseMove = (e: MouseEvent) => {
+      const deltaX = e.clientX - startX;
+      const deltaY = e.clientY - startY;
+      
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      let newX = startPosX;
+      let newY = startPosY;
+      
+      // Handle different resize directions
+      if (direction.includes('e')) {
+        newWidth = Math.max(400, startWidth + deltaX);
+      }
+      if (direction.includes('w')) {
+        newWidth = Math.max(400, startWidth - deltaX);
+        newX = startPosX + (startWidth - newWidth);
+      }
+      if (direction.includes('s')) {
+        newHeight = Math.max(300, startHeight + deltaY);
+      }
+      if (direction.includes('n')) {
+        newHeight = Math.max(300, startHeight - deltaY);
+        newY = startPosY + (startHeight - newHeight);
+      }
+      
+      onSizeChange({ width: newWidth, height: newHeight });
+      if (newX !== startPosX || newY !== startPosY) {
+        onPositionChange({ x: newX, y: newY });
+      }
     };
 
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
     };
 
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  }
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   return (
     <div
-      ref={winRef}
-      className={`mac-window ${drag.isDragging ? 'dragging' : ''}`}
+      ref={ref}
+      className={`mac-window ${isDragging ? 'dragging' : ''}`}
       style={{
-        position: 'fixed',                 // fixed so math matches clientX/Y
         left: `${position.x}px`,
         top: `${position.y}px`,
         width: `${size.width}px`,
         height: `${size.height}px`,
-        zIndex,
-        transform: drag.isDragging ? 'translateZ(0)' : 'none', // GPU acceleration when dragging
-        transition: drag.isDragging ? 'none' : 'opacity 0.1s ease' // disable transitions during drag
+        zIndex
       }}
-      onMouseDownCapture={onFocus}         // bring to front before any drag
+      onMouseDown={handleMouseDown}
       data-testid={testId}
     >
-      <div
-        className="mac-window-title-bar"
-        onPointerDown={drag.onPointerDown} // drag from titlebar only
-        onPointerMove={drag.onPointerMove}
-        onPointerUp={drag.onPointerUp}
-      >
+      <div className="mac-window-title-bar">
         <div className="mac-window-title">{title}</div>
         <div className="mac-window-controls">
           <button 

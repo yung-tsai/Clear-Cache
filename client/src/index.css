@@ -145,14 +145,13 @@
 
 /* Classic Mac Window Styling */
 .mac-window {
-  position: fixed; /* fixed so clientX/Y matches viewport coords */
+  position: absolute;
   background: var(--mac-white);
   border: 2px outset #c0c0c0;
   box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
   min-width: 300px;
   min-height: 200px;
-  /* removed cursor: move here - drag from titlebar only */
-  contain: layout style paint; /* optimize rendering performance */
+  cursor: move;
 }
 
 .mac-window-title-bar {
@@ -163,7 +162,6 @@
   align-items: center;
   padding: 0 8px;
   cursor: move;
-  user-select: none; /* prevents selecting title while dragging */
 }
 
 .mac-window-title {
@@ -592,9 +590,8 @@
 
 /* Utility Classes */
 .dragging {
-  opacity: 0.95; /* lighter opacity to reduce visual lag */
-  transform: translateZ(0); /* force GPU acceleration */
-  will-change: transform; /* hint browser for optimization */
+  opacity: 0.7;
+  z-index: 1002;
 }
 
 .hidden {
@@ -606,30 +603,6 @@
   height: calc(100vh - 22px);
   position: relative;
   transition: background 0.3s ease;
-}
-
-/* Responsive behavior */
-@media (max-width: 900px) {
-  .mac-window {
-    left: 0 !important; 
-    top: 22px !important; /* account for menu bar */
-    width: 100vw !important; 
-    height: calc(100vh - 22px) !important;
-    border-radius: 0;
-    min-width: unset;
-    min-height: unset;
-  }
-  .mac-window-title-bar { 
-    cursor: default; 
-  }
-}
-
-/* Portal window root */
-#window-root { 
-  position: fixed; 
-  inset: 0; 
-  z-index: 2147483000; 
-  pointer-events: none;
 }
 
 /* Default Classic Mac Background */

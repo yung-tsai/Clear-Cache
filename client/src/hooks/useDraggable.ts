@@ -1,75 +1,98 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useCallback, useState } from "react";
 
-type Pos = { x: number; y: number };
-
-export function useDraggable(opts: {
-  getElement: () => HTMLElement | null;    // window element (not the titlebar)
-  onDrag: (pos: Pos) => void;              // pass clamped left/top to parent
+interface UseDraggableOptions {
+  onDrag?: (position: { x: number; y: number }) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
-  clamp?: (pos: Pos) => Pos;               // optional bounds clamp
-  scale?: number;                          // desktop zoom (default 1)
-}) {
-  const { getElement, onDrag, onDragStart, onDragEnd, clamp, scale = 1 } = opts;
+}
+
+export function useDraggable({ onDrag, onDragStart, onDragEnd }: UseDraggableOptions = {}) {
+  const ref = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const start = useRef({ dx: 0, dy: 0 });
-  const ptrId = useRef<number | null>(null);
-  const rafId = useRef<number | null>(null);
+  const dragStateRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    startLeft: 0,
+    startTop: 0
+  });
 
-  const onPointerDown = useCallback((e: React.PointerEvent) => {
-    const el = getElement();
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    // distance between pointer and window's top-left (account for zoom)
-    start.current.dx = (e.clientX - rect.left) / scale;
-    start.current.dy = (e.clientY - rect.top) / scale;
-
-    ptrId.current = e.pointerId;
-    el.setPointerCapture(e.pointerId);
+  const handleMouseDown = useCallback((e: MouseEvent) => {
+    if (!ref.current) return;
+    
+    const titleBar = ref.current.querySelector('.mac-window-title-bar');
+    if (!titleBar || !titleBar.contains(e.target as Node)) return;
+    
+    e.preventDefault();
     setIsDragging(true);
     onDragStart?.();
-
-    // prevent accidental text selection while dragging
-    (document.body.style as any).userSelect = "none";
-  }, [getElement, onDragStart, scale]);
-
-  const onPointerMove = useCallback((e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const el = getElement();
-    if (!el) return;
-
-    // Cancel previous animation frame to prevent queue buildup
-    if (rafId.current) {
-      cancelAnimationFrame(rafId.current);
-    }
-
-    // Use requestAnimationFrame for smoother performance
-    rafId.current = requestAnimationFrame(() => {
-      let x = e.clientX / scale - start.current.dx;
-      let y = e.clientY / scale - start.current.dy;
-
-      const next = clamp ? clamp({ x, y }) : { x, y };
-      onDrag({ x: Math.round(next.x), y: Math.round(next.y) });
-      rafId.current = null;
-    });
-  }, [isDragging, getElement, clamp, onDrag, scale]);
-
-  const onPointerUp = useCallback((e: React.PointerEvent) => {
-    if (!isDragging) return;
-    const el = getElement();
-    if (el && ptrId.current != null) el.releasePointerCapture(ptrId.current);
     
-    // Cancel any pending animation frame
-    if (rafId.current) {
-      cancelAnimationFrame(rafId.current);
-      rafId.current = null;
+    const rect = ref.current.getBoundingClientRect();
+    dragStateRef.current = {
+      isDragging: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      startLeft: rect.left,
+      startTop: rect.top
+    };
+  }, [onDragStart]);
+
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!dragStateRef.current.isDragging || !ref.current) return;
+    
+    const deltaX = e.clientX - dragStateRef.current.startX;
+    const deltaY = e.clientY - dragStateRef.current.startY;
+    
+    const newLeft = Math.max(0, Math.min(
+      dragStateRef.current.startLeft + deltaX,
+      window.innerWidth - ref.current.offsetWidth
+    ));
+    
+    const newTop = Math.max(20, Math.min(
+      dragStateRef.current.startTop + deltaY,
+      window.innerHeight - ref.current.offsetHeight
+    ));
+    
+    onDrag?.({ x: newLeft, y: newTop });
+  }, [onDrag]);
+
+  const handleMouseUp = useCallback(() => {
+    if (dragStateRef.current.isDragging) {
+      setIsDragging(false);
+      dragStateRef.current.isDragging = false;
+      onDragEnd?.();
+    }
+  }, [onDragEnd]);
+
+  // Attach event listeners
+  const attachListeners = useCallback((element: HTMLDivElement) => {
+    element.addEventListener('mousedown', handleMouseDown as EventListener);
+    
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+    
+    return () => {
+      element.removeEventListener('mousedown', handleMouseDown as EventListener);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
+
+  const setRef = useCallback((element: HTMLDivElement | null) => {
+    if (ref.current) {
+      // Clean up previous listeners
+      ref.current.removeEventListener('mousedown', handleMouseDown as EventListener);
     }
     
-    ptrId.current = null;
-    setIsDragging(false);
-    onDragEnd?.();
-    (document.body.style as any).userSelect = "";
-  }, [isDragging, onDragEnd, getElement]);
+    (ref as any).current = element;
+    
+    if (element) {
+      attachListeners(element);
+    }
+  }, [attachListeners, handleMouseDown]);
 
-  return { onPointerDown, onPointerMove, onPointerUp, isDragging };
+  return {
+    ref: setRef,
+    isDragging
+  };
 }

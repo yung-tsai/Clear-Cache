@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
+import { useState, useEffect } from "react";
 import MenuBar from "@/components/MenuBar";
 import MacWindow from "@/components/MacWindow";
 import JournalEntry from "@/components/JournalEntry";
@@ -54,29 +53,10 @@ export default function Journal() {
     }
   };
 
-  // Z-order array: window IDs from back to front (last = topmost)
-  const [zStack, setZStack] = useState<string[]>(['main']);
+  const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const [currentBackground, setCurrentBackground] = useState('classic');
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
-
-  // Base z-index for the lowest window in the stack
-  const BASE_Z = 1000;
-
-  // Ensure window portal root exists
-  const portalEl = useMemo(() => {
-    let el = document.getElementById("window-root");
-    if (!el) {
-      el = document.createElement("div");
-      el.id = "window-root";
-      el.style.position = "fixed";
-      el.style.inset = "0";
-      el.style.zIndex = "2147483000"; // Near-max to avoid stacking context traps
-      el.style.pointerEvents = "none"; // Allow clicks through to desktop
-      document.body.appendChild(el);
-    }
-    return el;
-  }, []);
 
   // Play startup sound when app loads
   useEffect(() => {
@@ -93,40 +73,6 @@ export default function Journal() {
     onSearchEntries: handleSearchEntries
   });
 
-  // Keep windows in bounds when browser resizes
-  useEffect(() => {
-    const onResize = () => {
-      setWindows(ws => ws.map(w => {
-        const maxX = Math.max(0, window.innerWidth  - w.size.width);
-        const maxY = Math.max(0, window.innerHeight - w.size.height);
-        return { 
-          ...w, 
-          position: { 
-            x: Math.min(w.position.x, maxX), 
-            y: Math.min(w.position.y, maxY) 
-          } 
-        };
-      }));
-    };
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
-  // Helper functions for z-order management
-  const bringToFront = (windowId: string) => {
-    setZStack(prev => [...prev.filter(id => id !== windowId), windowId]);
-  };
-
-  const openWindow = (newWindow: any) => {
-    setWindows(prev => {
-      // Remove any existing window with same ID (for singleton windows like search)
-      const without = prev.filter(w => w.id !== newWindow.id);
-      return [...without, newWindow];
-    });
-    // Put window on top immediately
-    setZStack(prev => [...prev.filter(id => id !== newWindow.id), newWindow.id]);
-  };
-
   function handleNewEntry() {
     playSound('windowOpen');
     const windowId = `entry-${Date.now()}`;
@@ -137,9 +83,12 @@ export default function Journal() {
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
       size: getStoredSize('entry', { width: 700, height: 600 }),
-      zIndex: 0 // Will be computed from z-order
+      zIndex: nextZIndex
     };
-    openWindow(newWindow);
+    setWindows(prev => [...prev, newWindow]);
+    setNextZIndex(prev => prev + 1);
+    // Auto-focus the new window after a brief delay
+    setTimeout(() => bringToFront(windowId), 50);
   }
 
   function handleSearchEntries() {
@@ -151,9 +100,12 @@ export default function Journal() {
       component: <SearchWindow onViewEntry={handleViewEntry} onDragStart={setDraggedEntry} />,
       position: { x: 150 + Math.random() * 200, y: 150 + Math.random() * 100 },
       size: getStoredSize('search', { width: 600, height: 400 }),
-      zIndex: 0 // Will be computed from z-order
+      zIndex: nextZIndex
     };
-    openWindow(searchWindow);
+    setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
+    setNextZIndex(prev => prev + 1);
+    // Auto-focus the search window after a brief delay
+    setTimeout(() => bringToFront('search'), 50);
   }
 
   function handleShowGratitudePrompts() {
@@ -180,9 +132,10 @@ export default function Journal() {
               ),
               position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
               size: { width: 500, height: 400 },
-              zIndex: 0 // Will be computed from z-order
+              zIndex: nextZIndex + 1
             };
-            openWindow(newWindow);
+            setWindows(prev => [...prev, newWindow]);
+            setNextZIndex(prev => prev + 2);
             
             // Pre-fill the entry with gratitude content
             setTimeout(() => {
@@ -197,9 +150,12 @@ export default function Journal() {
       ),
       position: { x: 200 + Math.random() * 150, y: 150 + Math.random() * 100 },
       size: { width: 450, height: 500 },
-      zIndex: 0 // Will be computed from z-order
+      zIndex: nextZIndex
     };
-    openWindow(gratitudeWindow);
+    setWindows(prev => [...prev.filter(w => w.type !== 'gratitude'), gratitudeWindow]);
+    setNextZIndex(prev => prev + 1);
+    // Auto-focus the gratitude window after a brief delay
+    setTimeout(() => bringToFront('gratitude'), 50);
   }
 
   function handleShowMoodTrends() {
@@ -211,9 +167,12 @@ export default function Journal() {
       component: <MoodTrendsWindow onClose={() => closeWindow('trends')} />,
       position: { x: 180 + Math.random() * 150, y: 120 + Math.random() * 100 },
       size: { width: 500, height: 450 },
-      zIndex: 0 // Will be computed from z-order
+      zIndex: nextZIndex
     };
-    openWindow(trendsWindow);
+    setWindows(prev => [...prev.filter(w => w.type !== 'trends'), trendsWindow]);
+    setNextZIndex(prev => prev + 1);
+    // Auto-focus the trends window after a brief delay
+    setTimeout(() => bringToFront('trends'), 50);
   }
 
   function handleViewEntry(entryId: string, title: string) {
@@ -226,10 +185,13 @@ export default function Journal() {
       component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(windowId)} />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 700, height: 600 },
-      zIndex: 0, // Will be computed from z-order
+      zIndex: nextZIndex,
       entryId
     };
-    openWindow(viewWindow);
+    setWindows(prev => [...prev.filter(w => w.entryId !== entryId), viewWindow]);
+    setNextZIndex(prev => prev + 1);
+    // Auto-focus the view window after a brief delay
+    setTimeout(() => bringToFront(windowId), 50);
   }
 
   function handleSaveEntry() {
@@ -244,7 +206,15 @@ export default function Journal() {
   function closeWindow(windowId: string) {
     playSound('click');
     setWindows(prev => prev.filter(w => w.id !== windowId));
-    setZStack(prev => prev.filter(id => id !== windowId));
+  }
+
+  function bringToFront(windowId: string) {
+    setWindows(prev => prev.map(w => 
+      w.id === windowId 
+        ? { ...w, zIndex: nextZIndex }
+        : w
+    ));
+    setNextZIndex(prev => prev + 1);
   }
 
   function updateWindowPosition(windowId: string, position: { x: number; y: number }) {
@@ -273,91 +243,50 @@ export default function Journal() {
     }
   }
 
-  // Compute window ordering by z-stack position
-  const orderedWindows = useMemo(() => {
-    const stackIndex = new Map(zStack.map((id, i) => [id, i]));
-    // Sort by position in zStack; unknown ids go to back
-    return [...windows].sort((a, b) => (stackIndex.get(a.id) ?? -1) - (stackIndex.get(b.id) ?? -1));
-  }, [windows, zStack]);
-
-  // Render windows in their own portal layer
-  const windowLayer = (
-    <div
-      id="window-layer"
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 2147483000, // Near-max to avoid stacking context traps
-        pointerEvents: "none" // Allow clicks through to desktop
-      }}
-    >
-      {orderedWindows.map((window, i) => {
-        const computedZIndex = BASE_Z + i; // Strictly increasing z-index
-        return (
-          <div
-            key={window.id}
-            style={{
-              position: "absolute",
-              left: window.position.x,
-              top: window.position.y,
-              width: window.size.width,
-              height: window.size.height,
-              zIndex: computedZIndex,
-              pointerEvents: "auto" // Re-enable pointer events on windows
-            }}
-            onMouseDownCapture={() => bringToFront(window.id)} // Capture ensures it fires even if inner elements stopPropagation
-          >
-            <MacWindow
-              title={window.title}
-              position={window.position}
-              size={window.size}
-              zIndex={computedZIndex}
-              onClose={() => closeWindow(window.id)}
-              onFocus={() => bringToFront(window.id)}
-              onPositionChange={(position) => updateWindowPosition(window.id, position)}
-              onSizeChange={(size) => updateWindowSize(window.id, size)}
-              data-testid={`window-${window.type}-${window.id}`}
-            >
-              {window.component}
-            </MacWindow>
-          </div>
-        );
-      })}
-    </div>
-  );
-
   return (
-    <>
-      <div className="h-screen w-screen overflow-hidden">
-        <MenuBar 
-          onNewEntry={handleNewEntry}
-          onSearchEntries={handleSearchEntries}
-          onShowGratitudePrompts={handleShowGratitudePrompts}
-          onShowMoodTrends={handleShowMoodTrends}
-          soundEnabled={soundEnabled}
-          onToggleSound={toggleSound}
-          onChangeBackground={setCurrentBackground}
-          currentBackground={currentBackground}
+    <div className="h-screen w-screen overflow-hidden">
+      <MenuBar 
+        onNewEntry={handleNewEntry}
+        onSearchEntries={handleSearchEntries}
+        onShowGratitudePrompts={handleShowGratitudePrompts}
+        onShowMoodTrends={handleShowMoodTrends}
+        soundEnabled={soundEnabled}
+        onToggleSound={toggleSound}
+        onChangeBackground={setCurrentBackground}
+        currentBackground={currentBackground}
+      />
+      
+      <div className={`desktop background-${currentBackground}`}>
+        {windows.map(window => (
+          <MacWindow
+            key={window.id}
+            title={window.title}
+            position={window.position}
+            size={window.size}
+            zIndex={window.zIndex}
+            onClose={() => closeWindow(window.id)}
+            onFocus={() => bringToFront(window.id)}
+            onPositionChange={(position) => updateWindowPosition(window.id, position)}
+            onSizeChange={(size) => updateWindowSize(window.id, size)}
+            data-testid={`window-${window.type}-${window.id}`}
+          >
+            {window.component}
+          </MacWindow>
+        ))}
+        
+        {/* Desktop Widgets */}
+        <DesktopClock />
+        <DesktopWeatherWidget />
+        
+        <TrashIcon 
+          onDrop={handleTrashDrop}
+          draggedEntry={draggedEntry}
+          data-testid="trash-icon"
         />
         
-        <div className={`desktop background-${currentBackground}`}>
-          {/* Desktop Widgets */}
-          <DesktopClock />
-          <DesktopWeatherWidget />
-          
-          <TrashIcon 
-            onDrop={handleTrashDrop}
-            draggedEntry={draggedEntry}
-            data-testid="trash-icon"
-          />
-          
-          <CatharsisFolder onPlaySound={(soundName) => playSound(soundName as any)} />
-        </div>
+        <CatharsisFolder onPlaySound={(soundName) => playSound(soundName as any)} />
       </div>
-      
-      {/* Render windows in portal to avoid stacking context issues */}
-      {createPortal(windowLayer, portalEl)}
-    </>
+    </div>
   );
 }
 
