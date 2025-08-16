@@ -1,0 +1,181 @@
+You’re hitting a classic stacking-context trap. Two fixes will make new windows always pop to the front, reliably:
+
+Stop storing a per-window zIndex. Instead keep a single z-order array (topmost at the end) and compute zIndex from that.
+
+Render all windows in one top-level layer (portal to document.body or a #window-root) so no parent creates a higher stacking context that can trap a window underneath.
+
+Below is a drop-in pattern you can paste into your journal.tsx (or wherever you manage windows).
+
+1) Z-order manager (replace the zIndex logic)
+// at top of journal.tsx
+import { createPortal } from "react-dom";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type Win = {
+  id: string;
+  type: "main" | "entry" | "view" | "search";
+  title: string;
+  // ...whatever else you store (bounds, content, entryId, etc.)
+};
+
+// Base z for the lowest window in the stack
+const BASE_Z = 1000;
+
+export default function Journal() {
+  const [windows, setWindows] = useState<Win[]>([
+    { id: "main", type: "main", title: "MacJournal II" }
+  ]);
+
+  // zStack holds window ids from back → front. The last item is topmost.
+  const [zStack, setZStack] = useState<string[]>(["main"]);
+
+  // Ensure #window-root exists (once)
+  const portalEl = useMemo(() => {
+    let el = document.getElementById("window-root");
+    if (!el) {
+      el = document.createElement("div");
+      el.id = "window-root";
+      document.body.appendChild(el);
+    }
+    return el;
+  }, []);
+
+  // helpers
+  const bringToFront = (id: string) =>
+    setZStack(prev => [...prev.filter(x => x !== id), id]);
+
+  const openWindow = (w: Win) => {
+    setWindows(prev => {
+      // de-dup same id (e.g., search) but keep only one instance
+      const without = prev.filter(x => x.id !== w.id);
+      return [...without, w];
+    });
+    setZStack(prev => [...prev.filter(x => x !== w.id), w.id]); // put on top immediately
+  };
+
+  const closeWindow = (id: string) => {
+    setWindows(prev => prev.filter(w => w.id !== id));
+    setZStack(prev => prev.filter(x => x !== id));
+  };
+
+  // Your open handlers now just call openWindow(...)
+  const handleSearchEntries = () =>
+    openWindow({ id: "search", type: "search", title: "Search Entries" });
+
+  const handleNewEntry = () =>
+    openWindow({ id: `entry-${crypto.randomUUID()}`, type: "entry", title: "New Journal Entry" });
+
+  const handleViewEntry = (entryId: string, title: string) =>
+    openWindow({ id: `view-${entryId}`, type: "view", title: `View: ${title}` });
+
+  // Render windows ordered by zStack; compute zIndex by index
+  const ordered = useMemo(() => {
+    const idx = new Map(zStack.map((id, i) => [id, i]));
+    // sort by position in zStack; unknown ids go to back
+    return [...windows].sort((a, b) => (idx.get(a.id) ?? -1) - (idx.get(b.id) ?? -1));
+  }, [windows, zStack]);
+
+  const desktop = (
+    <div
+      id="window-layer"
+      style={{
+        position: "fixed",
+        inset: 0,
+        // This container must be above your app shell. If your shell has z-index, set this higher.
+        zIndex: 2147483000, // near-max, avoids being trapped by other stacks
+        // Optional: allow clicks only on windows, not the layer
+        pointerEvents: "none"
+      }}
+    >
+      {ordered.map((w, i) => {
+        const z = BASE_Z + i; // strictly increasing
+        return (
+          <div
+            key={w.id}
+            className="window"
+            style={{
+              position: "absolute",
+              // your window position/size here
+              top: 80 + i * 6, left: 80 + i * 8, // demo positioning
+              width: 640, height: 420,
+              zIndex: z,
+              pointerEvents: "auto" // re-enable pointer events on the window itself
+            }}
+            onMouseDownCapture={() => bringToFront(w.id)} // capture ensures it fires even if inner elements stopPropagation
+          >
+            <TitleBar
+              title={w.title}
+              onClose={() => closeWindow(w.id)}
+              onFocus={() => bringToFront(w.id)}
+            />
+            <WindowContent window={w} onOpenSearch={handleSearchEntries} />
+          </div>
+        );
+      })}
+    </div>
+  );
+
+  return (
+    <>
+      {/* Your app shell (menus, dock, etc.) here — do NOT give it a z-index higher than the window-layer */}
+      {createPortal(desktop, portalEl)}
+    </>
+  );
+}
+
+// stub components
+function TitleBar({ title, onClose, onFocus }: { title: string; onClose: () => void; onFocus: () => void }) {
+  return (
+    <div
+      className="titlebar"
+      onMouseDownCapture={onFocus}
+      style={{ cursor: "move", userSelect: "none", background: "#ddd", borderBottom: "1px solid #000" }}
+    >
+      {title}
+      <button onClick={onClose} style={{ float: "right" }}>✕</button>
+    </div>
+  );
+}
+function WindowContent({ window, onOpenSearch }: any) {
+  // render by window.type; call onOpenSearch() when needed
+  return <div style={{ padding: 8, height: "calc(100% - 24px)" }}>...</div>;
+}
+
+Why this works
+
+New window IDs are pushed to the end of zStack → guaranteed topmost.
+
+zIndex is derived from order, so no stale per-window z values or race conditions.
+
+onMouseDownCapture keeps focus/bring-to-front reliable even if inner elements stop propagation.
+
+Everything renders in a single top layer via a portal, so no parent transform/opacity/filter/z-index can trap a window “under” something else.
+
+2) CSS pitfalls to eliminate
+
+Make sure none of the window ancestors create separate stacking contexts that beat your windows:
+
+Avoid on ancestors of windows: transform, filter, perspective, mix-blend-mode, isolation: isolate, opacity < 1, will-change, or a non-auto z-index on a positioned element.
+
+If your app shell needs those effects, keep the shell below the #window-root layer. The snippet sets #window-root { z-index: 2147483000 } to be safe.
+
+Minimal CSS you can add:
+
+#window-root { position: fixed; inset: 0; }
+.window { background: #f1f1f1; border: 1px solid #000; box-shadow: 0 2px 0 #000; }
+
+3) If you must keep your current structure
+
+You can still apply the zStack approach without a portal:
+
+Put all windows under one .window-layer element that has no transform, no opacity, no z-index (or a single high z-index).
+
+Ensure the main window is just another window in the same layer (don’t give it a higher parent z-index). If your “MacJournal II” container has z-index: 1 on a different stacking context parent, it can still sit over new windows—move it into the shared layer.
+
+4) Optional quality-of-life tweaks
+
+Focus on open: after openWindow(w), call bringToFront(w.id) immediately (no timeouts needed).
+
+Drag brings to front: your drag handle should also call bringToFront on pointerdown.
+
+Persist z-order: keep zStack in a ref if you don’t want re-renders during drag.
