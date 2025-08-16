@@ -375,25 +375,48 @@ Try these formatting options:
 - *Italic* (Ctrl+I)  
 - _Underline_ (Ctrl+U)
 - Use Tab to indent nested items`}
-          className="rich-text-input"
+          className="rich-text-input-overlay"
           data-testid={testId}
           style={{ 
             position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            padding: '12px',
+            margin: 0,
+            border: '1px solid var(--mac-black)',
+            fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+            fontSize: '12px',
+            lineHeight: '1.4',
             color: 'transparent',
             backgroundColor: 'transparent',
             caretColor: 'black',
-            zIndex: 2
+            zIndex: 2,
+            resize: 'none',
+            outline: 'none'
           }}
         />
         <div
           className="live-preview-overlay"
           style={{
             position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            padding: '12px',
+            margin: 0,
+            border: '1px solid transparent',
+            fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+            fontSize: '12px',
+            lineHeight: '1.4',
             pointerEvents: 'none',
             zIndex: 1,
-            padding: '12px',
-            border: 'none',
-            background: 'transparent'
+            background: 'transparent',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+            overflow: 'hidden'
           }}
         >
           <FormattedTextDisplay
@@ -402,7 +425,11 @@ Try these formatting options:
             style={{
               border: 'none',
               background: 'transparent',
-              padding: '0'
+              padding: '0',
+              margin: '0',
+              fontFamily: 'inherit',
+              fontSize: 'inherit',
+              lineHeight: 'inherit'
             }}
           />
         </div>
