@@ -35,6 +35,24 @@ export default function Journal() {
     }
   ]);
 
+  // Window size persistence
+  const getStoredSize = (windowType: string, defaultSize: { width: number; height: number }) => {
+    try {
+      const stored = localStorage.getItem(`macjournal-window-size-${windowType}`);
+      return stored ? JSON.parse(stored) : defaultSize;
+    } catch {
+      return defaultSize;
+    }
+  };
+
+  const saveWindowSize = (windowType: string, size: { width: number; height: number }) => {
+    try {
+      localStorage.setItem(`macjournal-window-size-${windowType}`, JSON.stringify(size));
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
   const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const [currentBackground, setCurrentBackground] = useState('classic');
@@ -64,7 +82,7 @@ export default function Journal() {
       title: 'New Journal Entry',
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
-      size: { width: 700, height: 600 },
+      size: getStoredSize('entry', { width: 700, height: 600 }),
       zIndex: nextZIndex
     };
     setWindows(prev => [...prev, newWindow]);
@@ -79,7 +97,7 @@ export default function Journal() {
       title: 'Search Entries',
       component: <SearchWindow onViewEntry={handleViewEntry} onDragStart={setDraggedEntry} />,
       position: { x: 150 + Math.random() * 200, y: 150 + Math.random() * 100 },
-      size: { width: 600, height: 400 },
+      size: getStoredSize('search', { width: 600, height: 400 }),
       zIndex: nextZIndex
     };
     setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
@@ -194,6 +212,17 @@ export default function Journal() {
         ? { ...w, position }
         : w
     ));
+  }
+
+  function updateWindowSize(windowId: string, size: { width: number; height: number }) {
+    setWindows(prev => prev.map(w => {
+      if (w.id === windowId) {
+        // Save size to localStorage for this window type
+        saveWindowSize(w.type, size);
+        return { ...w, size };
+      }
+      return w;
+    }));
   }
 
   function updateWindowSize(windowId: string, size: { width: number; height: number }) {

@@ -55,7 +55,7 @@ export default function MacWindow({
     // TODO: Implement minimize functionality
   };
 
-  const handleResize = (e: React.MouseEvent) => {
+  const handleResize = (e: React.MouseEvent, direction: string) => {
     if (!onSizeChange) return;
     
     e.preventDefault();
@@ -65,15 +65,38 @@ export default function MacWindow({
     const startY = e.clientY;
     const startWidth = size.width;
     const startHeight = size.height;
+    const startPosX = position.x;
+    const startPosY = position.y;
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
       
-      const newWidth = Math.max(300, startWidth + deltaX);
-      const newHeight = Math.max(200, startHeight + deltaY);
+      let newWidth = startWidth;
+      let newHeight = startHeight;
+      let newX = startPosX;
+      let newY = startPosY;
+      
+      // Handle different resize directions
+      if (direction.includes('e')) {
+        newWidth = Math.max(400, startWidth + deltaX);
+      }
+      if (direction.includes('w')) {
+        newWidth = Math.max(400, startWidth - deltaX);
+        newX = startPosX + (startWidth - newWidth);
+      }
+      if (direction.includes('s')) {
+        newHeight = Math.max(300, startHeight + deltaY);
+      }
+      if (direction.includes('n')) {
+        newHeight = Math.max(300, startHeight - deltaY);
+        newY = startPosY + (startHeight - newHeight);
+      }
       
       onSizeChange({ width: newWidth, height: newHeight });
+      if (newX !== startPosX || newY !== startPosY) {
+        onPositionChange({ x: newX, y: newY });
+      }
     };
 
     const handleMouseUp = () => {
@@ -124,11 +147,19 @@ export default function MacWindow({
         {children}
       </div>
       {onSizeChange && (
-        <div 
-          className="mac-window-resize-handle"
-          onMouseDown={handleResize}
-          data-testid="resize-handle"
-        />
+        <>
+          {/* Corner handles */}
+          <div className="mac-window-resize-handle nw" onMouseDown={(e) => handleResize(e, 'nw')} data-testid="resize-nw" />
+          <div className="mac-window-resize-handle ne" onMouseDown={(e) => handleResize(e, 'ne')} data-testid="resize-ne" />
+          <div className="mac-window-resize-handle sw" onMouseDown={(e) => handleResize(e, 'sw')} data-testid="resize-sw" />
+          <div className="mac-window-resize-handle se" onMouseDown={(e) => handleResize(e, 'se')} data-testid="resize-se" />
+          
+          {/* Edge handles */}
+          <div className="mac-window-resize-handle n" onMouseDown={(e) => handleResize(e, 'n')} data-testid="resize-n" />
+          <div className="mac-window-resize-handle s" onMouseDown={(e) => handleResize(e, 's')} data-testid="resize-s" />
+          <div className="mac-window-resize-handle e" onMouseDown={(e) => handleResize(e, 'e')} data-testid="resize-e" />
+          <div className="mac-window-resize-handle w" onMouseDown={(e) => handleResize(e, 'w')} data-testid="resize-w" />
+        </>
       )}
     </div>
   );

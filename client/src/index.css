@@ -336,21 +336,77 @@
 }
 
 /* Window Resize Handle */
+/* Mac Window Resize Handles */
 .mac-window-resize-handle {
   position: absolute;
-  bottom: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background: #c0c0c0;
-  border-left: 1px solid #808080;
-  border-top: 1px solid #808080;
-  cursor: nw-resize;
-  opacity: 0.7;
+  z-index: 10;
 }
 
-.mac-window-resize-handle:hover {
-  opacity: 1;
+/* Corner handles */
+.mac-window-resize-handle.nw {
+  top: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: nw-resize;
+}
+
+.mac-window-resize-handle.ne {
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  cursor: ne-resize;
+}
+
+.mac-window-resize-handle.sw {
+  bottom: 0;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  cursor: sw-resize;
+}
+
+.mac-window-resize-handle.se {
+  bottom: 0;
+  right: 0;
+  width: 15px;
+  height: 15px;
+  background: linear-gradient(135deg, transparent 40%, var(--mac-gray) 40%, var(--mac-gray) 60%, transparent 60%);
+  cursor: se-resize;
+}
+
+/* Edge handles */
+.mac-window-resize-handle.n {
+  top: 0;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  cursor: n-resize;
+}
+
+.mac-window-resize-handle.s {
+  bottom: 0;
+  left: 8px;
+  right: 8px;
+  height: 4px;
+  cursor: s-resize;
+}
+
+.mac-window-resize-handle.e {
+  top: 8px;
+  bottom: 8px;
+  right: 0;
+  width: 4px;
+  cursor: e-resize;
+}
+
+.mac-window-resize-handle.w {
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 4px;
+  cursor: w-resize;
 }
 
 .mac-window-resize-handle::after {
@@ -1010,7 +1066,7 @@
 .editor-container {
   position: relative;
   flex: 1;
-  min-height: 150px;
+  min-height: 200px;
   background: var(--mac-white);
 }
 

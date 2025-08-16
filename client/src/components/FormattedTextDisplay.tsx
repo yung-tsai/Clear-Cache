@@ -12,13 +12,15 @@ export default function FormattedTextDisplay({ content, className = '', 'data-te
   const convertToHtml = (text: string) => {
     if (!text) return '';
     
-    console.log('Converting text to HTML:', text); // Debug log
-    
     let result = text
       // Convert headings (must be at start of line)
       .replace(/^### (.+)$/gm, '<h3 class="formatted-h3">$1</h3>')
       .replace(/^## (.+)$/gm, '<h2 class="formatted-h2">$1</h2>')
       .replace(/^# (.+)$/gm, '<h1 class="formatted-h1">$1</h1>')
+      // Convert bullet points to actual bullets
+      .replace(/^- (.+)$/gm, '• $1')
+      // Convert numbered lists 
+      .replace(/^(\d+)\. (.+)$/gm, '$1. $2')
       // Convert bold text - more specific regex
       .replace(/\*\*([^\*\n]+?)\*\*/g, '<strong class="formatted-bold">$1</strong>')
       // Convert italic text (single asterisk) - avoid conflict with bold
@@ -32,7 +34,6 @@ export default function FormattedTextDisplay({ content, className = '', 'data-te
       // Convert line breaks
       .replace(/\n/g, '<br>');
     
-    console.log('Converted HTML:', result); // Debug log
     return result;
   };
 

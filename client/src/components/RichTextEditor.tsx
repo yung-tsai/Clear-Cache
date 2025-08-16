@@ -347,15 +347,7 @@ export default function RichTextEditor({
 
   return (
     <div className="rich-text-editor">
-      <div className="editor-header">
-        <div className="catharsis-info">
-          <Heart size={12} />
-          <span>Select text to tag stress levels for catharsis</span>
-        </div>
-        <div className="formatting-hints">
-          <span className="hint">Shortcuts: Ctrl+B/I/U • "- " for bullets • "1. " for numbers • "#/#/###" for headings • Tab to indent</span>
-        </div>
-      </div>
+
       
       {/* Live preview overlay */}
       <div className="editor-container">
@@ -394,7 +386,10 @@ Try these formatting options:
             caretColor: 'black',
             zIndex: 2,
             resize: 'none',
-            outline: 'none'
+            outline: 'none',
+            boxSizing: 'border-box',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word'
           }}
         />
         <FormattedTextDisplay
@@ -418,7 +413,8 @@ Try these formatting options:
             whiteSpace: 'pre-wrap',
             wordWrap: 'break-word',
             overflow: 'hidden',
-            minHeight: 'auto'
+            minHeight: 'auto',
+            boxSizing: 'border-box'
           }}
         />
       </div>
