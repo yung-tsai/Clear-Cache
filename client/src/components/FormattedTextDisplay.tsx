@@ -74,10 +74,17 @@ const FormattedTextDisplay = React.forwardRef<HTMLDivElement, FormattedTextDispl
         dangerouslySetInnerHTML={{ __html: htmlContent }}
         data-testid={testId}
         style={{
-          fontFamily: 'Chicago, ChicagoFLF, Geneva, Arial, sans-serif',
+          fontFamily: 'ChicagoFLFExact, Geneva, Arial, sans-serif',
           fontSize: '12px',
+          lineHeight: '12px',
           fontWeight: 'normal',
           color: 'black',
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'break-word',
+          WebkitFontSmoothing: 'none',
+          fontKerning: 'none',
+          textRendering: 'optimizeSpeed',
+          WebkitTextSizeAdjust: '100%',
           ...style
         }}
       />

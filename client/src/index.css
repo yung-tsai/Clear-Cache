@@ -1,6 +1,15 @@
 /* Classic Mac Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+/* ChicagoFLF Font Definition */
+@font-face {
+  font-family: 'ChicagoFLFExact';
+  src: url('/fonts/ChicagoFLF.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -74,6 +83,32 @@
     cursor: default;
     user-select: none;
   }
+}
+
+/* Rich Text Editor Fixes */
+/* Neutralize heading tags in preview to prevent layout shifts */
+.live-preview-overlay h1,
+.live-preview-overlay h2,
+.live-preview-overlay h3 {
+  /* Kill browser defaults */
+  all: unset;
+  
+  /* Re-apply just what we want */
+  display: inline;                 /* no extra block line */
+  font-weight: 700;                /* "heading-ness" without size change */
+  font-size: inherit;              /* keep 12px so line-height stays 12px */
+  line-height: var(--rte-line);    /* exact match with textarea */
+  margin: 0;                       /* no extra spacing */
+  font-family: inherit;            /* use ChicagoFLFExact */
+}
+
+/* Preview subtree normalization to prevent nested elements from changing metrics */
+.live-preview-overlay, 
+.live-preview-overlay * {
+  box-sizing: border-box;
+  line-height: var(--rte-line);
+  letter-spacing: 0;
+  margin: 0;
 }
 
 /* Classic Mac Window Styling */

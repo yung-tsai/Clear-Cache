@@ -1,0 +1,68 @@
+Other checks & tweaks
+
+Bold/italic/underline order & safety
+Your convertToHtml ordering (headings → stress → bold → italic → underline) and the regexes with lookarounds look good; they avoid ** being eaten by * and reduce _snake_case_ false positives. 👍
+
+HTML escaping
+You escape <, >, & before inserting tags—good. Your inserted tags aren’t re-escaped, so they render correctly.
+
+Trailing blank line
+You add \u200B when value.endsWith('\n'). That’s exactly what you want for visual parity with the textarea.
+
+Scroll sync
+You wired onScroll on the textarea and mirror it to the preview—good. Make sure FormattedTextDisplay actually forwards the ref to the root element:
+
+// In FormattedTextDisplay.tsx
+export default forwardRef<HTMLDivElement, Props>(function FormattedTextDisplay(props, ref) {
+  return <div ref={ref} className={props.className} style={props.style}
+              dangerouslySetInnerHTML={{ __html: convertToHtml(props.content) }} />;
+});
+
+
+If it doesn’t forward, your sync won’t run.
+
+Exact same font on both layers
+You reference ChicagoFLFExact in sharedFont; make sure it’s actually defined via @font-face once in your app, otherwise one layer can silently fall back:
+
+@font-face {
+  font-family: 'ChicagoFLFExact';
+  src: url('/fonts/ChicagoFLF.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+Preview subtree normalization
+To prevent any nested element from changing metrics, it can help to lock defaults:
+
+.live-preview-overlay, .live-preview-overlay * {
+  box-sizing: border-box;
+  line-height: var(--rte-line);
+  letter-spacing: 0;
+  margin: 0;
+}
+
+
+Performance note
+For very long entries, many global regex passes can get expensive. If you ever notice jank, we can flip to a single-pass tokenizer—but you’re fine for now.
+
+Minimal changes to apply right now
+
+Add the CSS for headings (Option A) so they don’t alter layout.
+
+Ensure FormattedTextDisplay forwards ref for scroll sync.
+
+Confirm @font-face for ChicagoFLFExact is loaded.
+
+Once you add the heading CSS, test these cases:
+
+# Title
+normal text
+## Sub
+**bold** *italic* _underline_
+### Third
+after headings
+
+
+The caret/selection should stay perfectly aligned on every line. If you still see a 1px offset on a specific machine/DPR, we can add a one-pixel translateY() shim just to the textarea—but with the heading fix, you usually won’t need it.
