@@ -397,7 +397,8 @@ Try these formatting options:
             outline: 'none'
           }}
         />
-        <div
+        <FormattedTextDisplay
+          content={value || ''}
           className="live-preview-overlay"
           style={{
             position: 'absolute',
@@ -416,23 +417,10 @@ Try these formatting options:
             background: 'transparent',
             whiteSpace: 'pre-wrap',
             wordWrap: 'break-word',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            minHeight: 'auto'
           }}
-        >
-          <FormattedTextDisplay
-            content={value || ''}
-            className=""
-            style={{
-              border: 'none',
-              background: 'transparent',
-              padding: '0',
-              margin: '0',
-              fontFamily: 'inherit',
-              fontSize: 'inherit',
-              lineHeight: 'inherit'
-            }}
-          />
-        </div>
+        />
       </div>
       {showStressPopover && (
         <StressLevelPopover
