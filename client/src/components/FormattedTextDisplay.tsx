@@ -9,32 +9,59 @@ interface FormattedTextDisplayProps {
 
 const FormattedTextDisplay = React.forwardRef<HTMLDivElement, FormattedTextDisplayProps>(
   ({ content, className = '', 'data-testid': testId, style }, ref) => {
+    // Small helper: escape only risky HTML chars, not brackets
+    const escapeHtml = (s: string) =>
+      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
     // Convert markdown-style formatting to HTML for proper display
     const convertToHtml = (text: string) => {
       if (!text) return '';
       
-      let result = text
-        // Convert headings (must be at start of line)
-        .replace(/^### (.+)$/gm, '<h3 class="formatted-h3">$1</h3>')
-        .replace(/^## (.+)$/gm, '<h2 class="formatted-h2">$1</h2>')
-        .replace(/^# (.+)$/gm, '<h1 class="formatted-h1">$1</h1>')
-        // Convert bullet points to actual bullets
-        .replace(/^- (.+)$/gm, '• $1')
-        // Convert numbered lists 
-        .replace(/^(\d+)\. (.+)$/gm, '$1. $2')
-        // Convert bold text - more specific regex
-        .replace(/\*\*([^\*\n]+?)\*\*/g, '<strong class="formatted-bold">$1</strong>')
-        // Convert italic text (single asterisk) - avoid conflict with bold
-        .replace(/(?<!\*)\*([^\*\n]+?)\*(?!\*)/g, '<em class="formatted-italic">$1</em>')
-        // Convert underlined text
-        .replace(/_([^_\n]+?)_/g, '<u class="formatted-underline">$1</u>')
-        // Convert stress highlighting
-        .replace(/\[stress-angry\]([^[]+)\[\/stress-angry\]/g, '<span class="stress-highlight stress-angry">$1</span>')
-        .replace(/\[stress-sad\]([^[]+)\[\/stress-sad\]/g, '<span class="stress-highlight stress-sad">$1</span>')
-        .replace(/\[stress-anxious\]([^[]+)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>')
-        // Convert line breaks
-        .replace(/\n/g, '<br>');
+      // 1) normalize line endings
+      let result = text.replace(/\r\n?|\r/g, "\n");
+
+      // 2) escape HTML (leave [] alone so our custom tags remain matchable)
+      result = escapeHtml(result);
+
+      // 3) headings (do first; use multiline anchors)
+      result = result
+        .replace(/^###[ \t]+(.+)$/gm, '<h3 class="formatted-h3">$1</h3>')
+        .replace(/^##[ \t]+(.+)$/gm, '<h2 class="formatted-h2">$1</h2>')
+        .replace(/^#[ \t]+(.+)$/gm, '<h1 class="formatted-h1">$1</h1>');
+
+      // Convert bullet points to actual bullets
+      result = result.replace(/^- (.+)$/gm, '• $1');
       
+      // Convert numbered lists 
+      result = result.replace(/^(\d+)\. (.+)$/gm, '$1. $2');
+
+      // 4) stress tags (single grouped rule)
+      result = result.replace(
+        /\[stress-(angry|sad|anxious)\]([\s\S]*?)\[\/stress-\1\]/g,
+        '<span class="stress-highlight stress-$1">$2</span>'
+      );
+
+      // 5) strong before em — prevent ** from being eaten by *
+      //    Disallow leading/trailing spaces inside the markers to reduce weird matches
+      result = result.replace(
+        /(?<!\*)\*\*(?!\s)([\s\S]*?)(?<!\s)\*\*(?!\*)/g,
+        '<strong class="formatted-bold">$1</strong>'
+      );
+
+      // 6) italic with single * (but not **, and not "* " or " *")
+      result = result.replace(
+        /(?<!\*)\*(?![\*\s])([\s\S]*?)(?<!\s)\*(?!\*)/g,
+        '<em class="formatted-italic">$1</em>'
+      );
+
+      // 7) underline with single _ (avoid __, avoid snake_case)
+      //    Require non-word boundary around underscores to skip identifiers
+      result = result.replace(
+        /(?<![\w_])_(?![_\s])([\s\S]*?)(?<!\s)_(?![\w_])/g,
+        '<u class="formatted-underline">$1</u>'
+      );
+
+      // 8) done — keep \n, rely on white-space: pre-wrap (no <br> insertion)
       return result;
     };
 

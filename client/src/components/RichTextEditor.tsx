@@ -349,20 +349,52 @@ export default function RichTextEditor({
     probe.remove();
   }, []);
 
+  // Small helper: escape only risky HTML chars, not brackets
+  const escapeHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
   // Convert markdown-like syntax to HTML for display
   const convertToHtml = (raw: string) => {
-    const text = raw.replace(/\r\n|\r/g, '\n'); // normalize line endings
-    return text
-      .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/_(.*?)_/g, '<u>$1</u>')
-      .replace(/\[stress-angry\](.*?)\[\/stress-angry\]/g, '<span class="stress-highlight stress-angry">$1</span>')
-      .replace(/\[stress-sad\](.*?)\[\/stress-sad\]/g, '<span class="stress-highlight stress-sad">$1</span>')
-      .replace(/\[stress-anxious\](.*?)\[\/stress-anxious\]/g, '<span class="stress-highlight stress-anxious">$1</span>');
-      // REMOVED: .replace(/\n/g, '<br>') - let CSS handle newlines with whiteSpace: 'pre-wrap'
+    // 1) normalize line endings
+    let text = raw.replace(/\r\n?|\r/g, "\n");
+
+    // 2) escape HTML (leave [] alone so our custom tags remain matchable)
+    text = escapeHtml(text);
+
+    // 3) headings (do first; use multiline anchors)
+    text = text
+      .replace(/^###[ \t]+(.+)$/gm, "<h3>$1</h3>")
+      .replace(/^##[ \t]+(.+)$/gm, "<h2>$1</h2>")
+      .replace(/^#[ \t]+(.+)$/gm, "<h1>$1</h1>");
+
+    // 4) stress tags (single grouped rule)
+    text = text.replace(
+      /\[stress-(angry|sad|anxious)\]([\s\S]*?)\[\/stress-\1\]/g,
+      '<span class="stress-highlight stress-$1">$2</span>'
+    );
+
+    // 5) strong before em — prevent ** from being eaten by *
+    //    Disallow leading/trailing spaces inside the markers to reduce weird matches
+    text = text.replace(
+      /(?<!\*)\*\*(?!\s)([\s\S]*?)(?<!\s)\*\*(?!\*)/g,
+      "<strong>$1</strong>"
+    );
+
+    // 6) italic with single * (but not **, and not "* " or " *")
+    text = text.replace(
+      /(?<!\*)\*(?![\*\s])([\s\S]*?)(?<!\s)\*(?!\*)/g,
+      "<em>$1</em>"
+    );
+
+    // 7) underline with single _ (avoid __, avoid snake_case)
+    //    Require non-word boundary around underscores to skip identifiers
+    text = text.replace(
+      /(?<![\w_])_(?![_\s])([\s\S]*?)(?<!\s)_(?![\w_])/g,
+      "<u>$1</u>"
+    );
+
+    // 8) done — keep \n, rely on white-space: pre-wrap
+    return text;
   };
 
   // Preserve trailing blank line visually to match textarea

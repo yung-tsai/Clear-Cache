@@ -1,0 +1,73 @@
+Here’s a drop-in, safer convertToHtml that avoids the italic/underline collisions and keeps your other rules. It:
+
+Normalizes \r\n → \n
+
+Escapes <, >, & (so no HTML injection)
+
+Applies headings → bold → italic → underline (ordered to prevent overlap)
+
+Uses strict regex with lookarounds so **bold** isn’t re-wrapped by * and _ doesn’t grab parts of snake_case
+
+Keeps newlines via CSS (white-space: pre-wrap)—no <br> insertion
+
+Handles stress tags with one grouped regex
+
+// small helper: escape only risky HTML chars, not brackets
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+const convertToHtml = (raw: string) => {
+  // 1) normalize line endings
+  let text = raw.replace(/\r\n?|\r/g, "\n");
+
+  // 2) escape HTML (leave [] alone so our custom tags remain matchable)
+  text = escapeHtml(text);
+
+  // 3) headings (do first; use multiline anchors)
+  text = text
+    .replace(/^###[ \t]+(.+)$/gm, "<h3>$1</h3>")
+    .replace(/^##[ \t]+(.+)$/gm, "<h2>$1</h2>")
+    .replace(/^#[ \t]+(.+)$/gm, "<h1>$1</h1>");
+
+  // 4) stress tags (single grouped rule)
+  text = text.replace(
+    /\[stress-(angry|sad|anxious)\]([\s\S]*?)\[\/stress-\1\]/g,
+    '<span class="stress-highlight stress-$1">$2</span>'
+  );
+
+  // 5) strong before em — prevent ** from being eaten by *
+  //    Disallow leading/trailing spaces inside the markers to reduce weird matches
+  text = text.replace(
+    /(?<!\*)\*\*(?!\s)([\s\S]*?)(?<!\s)\*\*(?!\*)/g,
+    "<strong>$1</strong>"
+  );
+
+  // 6) italic with single * (but not **, and not "* " or " *")
+  text = text.replace(
+    /(?<!\*)\*(?![\*\s])([\s\S]*?)(?<!\s)\*(?!\*)/g,
+    "<em>$1</em>"
+  );
+
+  // 7) underline with single _ (avoid __, avoid snake_case)
+  //    Require non-word boundary around underscores to skip identifiers
+  text = text.replace(
+    /(?<![\w_])_(?![_\s])([\s\S]*?)(?<!\s)_(?![\w_])/g,
+    "<u>$1</u>"
+  );
+
+  // 8) done — keep \n, rely on white-space: pre-wrap
+  return text;
+};
+
+
+If you want to sanity-check quickly, run these through it:
+
+[
+  "*italic*",
+  "**bold**",
+  "_underline_",
+  "*italic _and underline_*",
+  "__not underline__",
+  "snake_case_should_not_change",
+  "**bold *inside italic* bold**",
+].forEach(s => console.log(s, "=>", convertToHtml(s)));
