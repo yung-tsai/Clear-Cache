@@ -152,6 +152,7 @@
   min-width: 300px;
   min-height: 200px;
   /* removed cursor: move here - drag from titlebar only */
+  contain: layout style paint; /* optimize rendering performance */
 }
 
 .mac-window-title-bar {
@@ -591,7 +592,9 @@
 
 /* Utility Classes */
 .dragging {
-  opacity: 0.85; /* no z-index here - z-stack manager controls order */
+  opacity: 0.95; /* lighter opacity to reduce visual lag */
+  transform: translateZ(0); /* force GPU acceleration */
+  will-change: transform; /* hint browser for optimization */
 }
 
 .hidden {

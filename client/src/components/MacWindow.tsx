@@ -27,9 +27,10 @@ export default function MacWindow({
   onSizeChange,
   'data-testid': testId
 }: MacWindowProps) {
+  // All hooks must be at the top level and in consistent order
   const { playSound } = useMacSounds();
   const winRef = useRef<HTMLDivElement>(null);
-
+  
   // Keep the window fully inside viewport
   const clamp = useMemo(() => {
     return ({ x, y }: { x: number; y: number }) => {
@@ -115,7 +116,9 @@ export default function MacWindow({
         top: `${position.y}px`,
         width: `${size.width}px`,
         height: `${size.height}px`,
-        zIndex
+        zIndex,
+        transform: drag.isDragging ? 'translateZ(0)' : 'none', // GPU acceleration when dragging
+        transition: drag.isDragging ? 'none' : 'opacity 0.1s ease' // disable transitions during drag
       }}
       onMouseDownCapture={onFocus}         // bring to front before any drag
       data-testid={testId}

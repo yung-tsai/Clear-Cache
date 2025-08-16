@@ -14,6 +14,7 @@ export function useDraggable(opts: {
   const [isDragging, setIsDragging] = useState(false);
   const start = useRef({ dx: 0, dy: 0 });
   const ptrId = useRef<number | null>(null);
+  const rafId = useRef<number | null>(null);
 
   const onPointerDown = useCallback((e: React.PointerEvent) => {
     const el = getElement();
@@ -37,17 +38,33 @@ export function useDraggable(opts: {
     const el = getElement();
     if (!el) return;
 
-    let x = e.clientX / scale - start.current.dx;
-    let y = e.clientY / scale - start.current.dy;
+    // Cancel previous animation frame to prevent queue buildup
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+    }
 
-    const next = clamp ? clamp({ x, y }) : { x, y };
-    onDrag({ x: Math.round(next.x), y: Math.round(next.y) });
+    // Use requestAnimationFrame for smoother performance
+    rafId.current = requestAnimationFrame(() => {
+      let x = e.clientX / scale - start.current.dx;
+      let y = e.clientY / scale - start.current.dy;
+
+      const next = clamp ? clamp({ x, y }) : { x, y };
+      onDrag({ x: Math.round(next.x), y: Math.round(next.y) });
+      rafId.current = null;
+    });
   }, [isDragging, getElement, clamp, onDrag, scale]);
 
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     if (!isDragging) return;
     const el = getElement();
     if (el && ptrId.current != null) el.releasePointerCapture(ptrId.current);
+    
+    // Cancel any pending animation frame
+    if (rafId.current) {
+      cancelAnimationFrame(rafId.current);
+      rafId.current = null;
+    }
+    
     ptrId.current = null;
     setIsDragging(false);
     onDragEnd?.();
