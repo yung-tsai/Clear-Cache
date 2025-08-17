@@ -36,6 +36,9 @@ export default function Journal() {
     }
   ]);
 
+  // Track the currently active (focused) window
+  const [activeWindowId, setActiveWindowId] = useState<string>('main');
+
   // Window size persistence
   const getStoredSize = (windowType: string, defaultSize: { width: number; height: number }) => {
     try {
@@ -75,6 +78,40 @@ export default function Journal() {
     onNewEntry: handleNewEntry,
     onSearchEntries: handleSearchEntries
   });
+
+  // Global keyboard shortcut for closing windows (CMD+W / Ctrl+W / Esc)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Only react if we have an active window
+      if (!activeWindowId) return;
+
+      const isCloseCombo = 
+        (e.key === 'Escape') ||
+        ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w');
+
+      if (!isCloseCombo) return;
+
+      // Optional: don't close if user is typing in certain input fields
+      // Allow closing even while in contentEditable (TipTap editor) for convenience
+      const target = e.target as HTMLElement;
+      const tagName = target?.tagName?.toLowerCase();
+      const isInField = target?.isContentEditable || tagName === 'input' || tagName === 'textarea' || tagName === 'select';
+      
+      // Allow Esc to always work, but be more cautious with Cmd/Ctrl+W while typing
+      if (isInField && e.key !== 'Escape' && (tagName === 'input' || tagName === 'textarea')) {
+        return; // Don't close if typing in regular input/textarea
+      }
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Close the active window with prompt for unsaved changes
+      closeWindowWithPrompt(activeWindowId);
+    }
+
+    document.addEventListener('keydown', handleKeyDown, { capture: true });
+    return () => document.removeEventListener('keydown', handleKeyDown, { capture: true });
+  }, [activeWindowId, windows]);
 
   function openReleaseWindow(entryId: string, items?: any[]) {
     const id = `release-${entryId}`;
@@ -225,6 +262,40 @@ export default function Journal() {
   function closeWindow(windowId: string) {
     playSound('click');
     setWindows(prev => prev.filter(w => w.id !== windowId));
+    // Clear active window if we're closing the active one
+    setActiveWindowId(prev => prev === windowId ? 'main' : prev);
+  }
+
+  // Close window with unsaved changes check
+  function closeWindowWithPrompt(windowId: string) {
+    const window = windows.find(w => w.id === windowId);
+    
+    // For journal entry windows, check if there are unsaved changes
+    if (window?.type === 'entry' || window?.type === 'view') {
+      // Check if the window has unsaved content
+      const titleInput = document.querySelector(`[data-testid="window-${window.type}-${windowId}"] [data-testid="input-title"]`) as HTMLInputElement;
+      const hasUnsavedTitle = titleInput?.value && titleInput.value.trim() !== '';
+      
+      // Check if content editor has text
+      const editorContent = document.querySelector(`[data-testid="window-${window.type}-${windowId}"] .ProseMirror`) as HTMLElement;
+      const hasUnsavedContent = editorContent?.textContent && editorContent.textContent.trim() !== '';
+      
+      if (hasUnsavedTitle || hasUnsavedContent) {
+        const shouldSave = confirm('You have unsaved changes. Do you want to save before closing?');
+        if (shouldSave) {
+          // Trigger save by finding and clicking the save button
+          const saveButton = document.querySelector(`[data-testid="window-${window.type}-${windowId}"] button[type="submit"]`) as HTMLButtonElement;
+          if (saveButton) {
+            saveButton.click();
+            // Window will close automatically after save due to existing auto-close behavior
+            return;
+          }
+        }
+      }
+    }
+    
+    // Close without saving or for other window types
+    closeWindow(windowId);
   }
 
   // Brings any window to front
@@ -235,6 +306,8 @@ export default function Journal() {
         ? { ...w, zIndex: top }
         : w
     ));
+    // Set as active window
+    setActiveWindowId(windowId);
   }
 
   // Create or replace window and put it on top immediately
@@ -244,6 +317,8 @@ export default function Journal() {
       const base = prev.filter(w => w.id !== win.id);
       return [...base, { ...win, zIndex: top }];
     });
+    // Set newly opened window as active
+    setActiveWindowId(win.id);
   }
 
   function updateWindowPosition(windowId: string, position: { x: number; y: number }) {

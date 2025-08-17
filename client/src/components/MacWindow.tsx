@@ -120,7 +120,9 @@ export default function MacWindow({
         height: `${size.height}px`,
         zIndex
       }}
+      tabIndex={-1}  // Make focusable for keyboard events
       onMouseDown={handleMouseDown}
+      onFocus={onFocus}  // Also handle keyboard focus
       data-testid={testId}
     >
       <div className="mac-window-title-bar">
