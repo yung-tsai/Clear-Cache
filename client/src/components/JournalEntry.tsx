@@ -137,7 +137,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
       }
 
       onSave?.();
-      // Auto-close window after saving
+      // Auto-close window after updating
       setTimeout(() => onClose?.(), 1000);
     }
   });

@@ -213,19 +213,19 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 
         <div className="separator" />
         
-        {/* Tag controls */}
+        {/* Capture controls */}
         <div className="emotion-controls">
           <button 
             className={editor.isActive("tag") ? "active" : ""} 
             onClick={() => setShowTagPopup(!showTagPopup)}
-            title="Tag selected text"
+            title="Capture selected text"
           >
-            🏷️ Tag
+            📝 Capture
           </button>
           {showTagPopup && (
             <div className="emotion-popup" onClick={(e) => e.stopPropagation()}>
-              <button onClick={(e) => { e.stopPropagation(); addTag(); }}>Add Tag</button>
-              <button onClick={(e) => { e.stopPropagation(); removeTag(); }} className="clear-emotion">Remove Tag</button>
+              <button onClick={(e) => { e.stopPropagation(); addTag(); }}>Capture</button>
+              <button onClick={(e) => { e.stopPropagation(); removeTag(); }} className="clear-emotion">Delete</button>
             </div>
           )}
         </div>
@@ -243,7 +243,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
           }}
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
         >
-          <button type="button" className="tag-popover-btn" onClick={removeThisTag} title="Remove tag">🗑️ Remove</button>
+          <button type="button" className="tag-popover-btn" onClick={removeThisTag} title="Remove capture">🗑️ Remove</button>
         </div>
       )}
 

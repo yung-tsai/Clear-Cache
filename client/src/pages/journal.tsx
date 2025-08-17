@@ -85,9 +85,26 @@ export default function Journal() {
         id,
         type: 'release' as any,
         title: 'Release',
-        component: <div className="p-4"><h3>Release Items Found!</h3><pre>{JSON.stringify(items, null, 2)}</pre></div>,
+        component: <div className="p-4 text-xs" style={{ fontFamily: 'ChicagoFLF, Geneva, Arial, sans-serif' }}>
+          <h3 className="mb-3 font-bold">🎯 Release - Emotional Processing</h3>
+          <p className="mb-3">Tagged content from your journal entry:</p>
+          {items && items.length > 0 ? (
+            <div className="space-y-2">
+              {items.map((item: any, idx: number) => (
+                <div key={idx} className="p-2 bg-red-50 border border-red-200 rounded">
+                  "{item.text}"
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p>No tagged content found.</p>
+          )}
+          <p className="mt-4 text-xs text-gray-600">
+            Use this space to process and release any emotional content you've captured.
+          </p>
+        </div>,
         position: { x: 120, y: 90 },
-        size: { width: 680, height: 520 },
+        size: { width: 500, height: 400 },
         zIndex: z,
         entryId,
       } as any,
