@@ -1,0 +1,125 @@
+Great call. The most natural choice (and what users expect on macOS) is:
+
+⌘W (Cmd+W) to close the focused window (Mac)
+
+Ctrl+W to close the focused window (Windows/Linux)
+
+Esc as a safe universal fallback
+
+Because browsers sometimes treat Cmd/Ctrl+W as “close tab,” we’ll (1) only fire it when your app has a focused window, and (2) call preventDefault() to block the browser action. We’ll also support Esc so there’s zero risk if the browser ignores Cmd/Ctrl+W.
+
+Here’s a copy-paste patch for your window manager page (where you already track and render windows).
+
+1) Track the active (frontmost) window
+
+In the file where you manage windows (e.g. client/src/pages/journal.tsx), add an activeWindowId state and make bringToFront set it.
+
+// state
+const [windows, setWindows] = useState<YourWindowType[]>([]);
+const [activeWindowId, setActiveWindowId] = useState<string | null>(null);
+const [nextZIndex, setNextZIndex] = useState(1000);
+
+// bring to front (and mark active)
+function bringToFront(id: string) {
+  setWindows(prev =>
+    prev.map(w => w.id === id ? { ...w, zIndex: nextZIndex + 1 } : w)
+  );
+  setNextZIndex(z => z + 1);
+  setActiveWindowId(id);
+}
+
+// when you create ANY window, make it active immediately
+function openWindow(win: YourWindowType) {
+  const z = nextZIndex + 1;
+  const w = { ...win, zIndex: z };
+  setWindows(prev => [...prev, w]);
+  setNextZIndex(z);
+  setActiveWindowId(w.id);
+}
+
+
+When you render each MacWindow, wire its existing onFocus to call bringToFront(window.id) (you already do this). That keeps activeWindowId current.
+
+2) Add a global hotkey handler (Cmd/Ctrl+W and Esc)
+
+Still in the same file:
+
+useEffect(() => {
+  function handleKey(e: KeyboardEvent) {
+    // Focus guard: only react if we have an active window that is not the main desktop
+    if (!activeWindowId || activeWindowId === 'main') return;
+
+    const isCloseCombo =
+      (e.key === 'Escape') ||
+      ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'w');
+
+    if (!isCloseCombo) return;
+
+    // Optional: don’t close if user is typing in an input/textarea/select
+    const t = e.target as HTMLElement;
+    const tag = t?.tagName?.toLowerCase();
+    const inField =
+      t?.isContentEditable ||
+      tag === 'input' ||
+      tag === 'textarea' ||
+      tag === 'select';
+
+    // If you want Esc/Cmd+W to still work even while typing inside your window,
+    // set inField = false. Otherwise keep this guard:
+    // if (inField && e.key !== 'Escape') return; // allow Esc, block Cmd/Ctrl+W
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    closeWindow(activeWindowId);
+  }
+
+  document.addEventListener('keydown', handleKey, { capture: true });
+  return () => document.removeEventListener('keydown', handleKey, { capture: true });
+}, [activeWindowId]);
+
+
+Implement closeWindow:
+
+function closeWindow(id: string) {
+  setWindows(prev => prev.filter(w => w.id !== id));
+  setActiveWindowId(prev => (prev === id ? null : prev));
+}
+
+
+This intercepts Cmd/Ctrl+W before the browser sees it, and closes the focused app window instead of the tab. Esc also closes the focused window.
+
+3) Make sure each window can receive focus
+
+In client/src/components/MacWindow.tsx, ensure the root is focusable and calls onFocus:
+
+<div
+  ref={ref}
+  className={`mac-window ${isDragging ? 'dragging' : ''}`}
+  tabIndex={-1}                 // <— allow programmatic focus / key events
+  onMouseDown={handleMouseDown} // calls onFocus()
+  onFocus={onFocus}             // optional: also focus via keyboard
+  style={{ left: position.x, top: position.y, width: size.width, height: size.height, zIndex }}
+  data-testid={testId}
+>
+
+
+Optionally, whenever you open or bring a window to front, you can also call document.getElementById(win.id)?.focus() if you give each window a DOM id, but onMouseDown + activeWindowId is usually enough.
+
+4) (Optional) Menu hint in your UI
+
+Somewhere in your “Window” menu or help tooltip:
+
+Close Window: ⌘W (Mac) / Ctrl+W (Win), or Esc
+
+So users discover it.
+
+Notes / gotchas
+
+Browsers sometimes jealously guard Ctrl/Cmd+W. With the global listener above using capture: true, preventDefault, and an active-window guard, you’ll be fine in modern Chrome/Safari/Edge.
+
+If you ever notice the browser still closes the tab on Ctrl/Cmd+W, fall back to Esc (you already get Esc with this patch).
+
+If you want Minimize too, map ⌘M / Ctrl+M and toggle a minimized flag on the focused window rather than removing it.
+
+If you want me to turn this into exact diffs for your current files, paste the relevant sections (or filenames + the function you’re using to render windows), and I’ll tailor it line-for-line.
