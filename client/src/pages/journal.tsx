@@ -53,6 +53,7 @@ export default function Journal() {
     }
   };
 
+  // start high to avoid colliding with other app layers
   const [nextZIndex, setNextZIndex] = useState(1000);
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const [currentBackground, setCurrentBackground] = useState('classic');
@@ -75,42 +76,32 @@ export default function Journal() {
 
   function handleNewEntry() {
     playSound('windowOpen');
-    const windowId = `entry-${Date.now()}`;
-    const newWindow = {
+    const windowId = `entry-${crypto.randomUUID()}`;
+    openWindow({
       id: windowId,
       type: 'entry' as const,
       title: 'New Journal Entry',
       component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
-      size: getStoredSize('entry', { width: 700, height: 600 }),
-      zIndex: nextZIndex
-    };
-    setWindows(prev => [...prev, newWindow]);
-    setNextZIndex(prev => prev + 1);
-    // Auto-focus the new window after a brief delay
-    setTimeout(() => bringToFront(windowId), 50);
+      size: getStoredSize('entry', { width: 700, height: 600 })
+    });
   }
 
   function handleSearchEntries() {
     playSound('click');
-    const searchWindow = {
+    openWindow({
       id: 'search',
       type: 'search' as const,
       title: 'Search Entries',
       component: <SearchWindow onViewEntry={handleViewEntry} onDragStart={setDraggedEntry} />,
       position: { x: 150 + Math.random() * 200, y: 150 + Math.random() * 100 },
-      size: getStoredSize('search', { width: 600, height: 400 }),
-      zIndex: nextZIndex
-    };
-    setWindows(prev => [...prev.filter(w => w.type !== 'search'), searchWindow]);
-    setNextZIndex(prev => prev + 1);
-    // Auto-focus the search window after a brief delay
-    setTimeout(() => bringToFront('search'), 50);
+      size: getStoredSize('search', { width: 600, height: 400 })
+    });
   }
 
   function handleShowGratitudePrompts() {
     playSound('click');
-    const gratitudeWindow = {
+    openWindow({
       id: 'gratitude',
       type: 'gratitude' as const,
       title: 'Gratitude Prompts',
@@ -119,8 +110,8 @@ export default function Journal() {
           onCreateEntry={(title, content) => {
             closeWindow('gratitude');
             // Create a new journal entry with the gratitude content
-            const windowId = `entry-${Date.now()}`;
-            const newWindow = {
+            const windowId = `entry-${crypto.randomUUID()}`;
+            openWindow({
               id: windowId,
               type: 'entry' as const,
               title: 'New Gratitude Entry',
@@ -131,11 +122,8 @@ export default function Journal() {
                 />
               ),
               position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
-              size: { width: 500, height: 400 },
-              zIndex: nextZIndex + 1
-            };
-            setWindows(prev => [...prev, newWindow]);
-            setNextZIndex(prev => prev + 2);
+              size: { width: 500, height: 400 }
+            });
             
             // Pre-fill the entry with gratitude content
             setTimeout(() => {
@@ -149,49 +137,34 @@ export default function Journal() {
         />
       ),
       position: { x: 200 + Math.random() * 150, y: 150 + Math.random() * 100 },
-      size: { width: 450, height: 500 },
-      zIndex: nextZIndex
-    };
-    setWindows(prev => [...prev.filter(w => w.type !== 'gratitude'), gratitudeWindow]);
-    setNextZIndex(prev => prev + 1);
-    // Auto-focus the gratitude window after a brief delay
-    setTimeout(() => bringToFront('gratitude'), 50);
+      size: { width: 450, height: 500 }
+    });
   }
 
   function handleShowMoodTrends() {
     playSound('click');
-    const trendsWindow = {
+    openWindow({
       id: 'trends',
       type: 'trends' as const,
       title: 'Mood Trends',
       component: <MoodTrendsWindow onClose={() => closeWindow('trends')} />,
       position: { x: 180 + Math.random() * 150, y: 120 + Math.random() * 100 },
-      size: { width: 500, height: 450 },
-      zIndex: nextZIndex
-    };
-    setWindows(prev => [...prev.filter(w => w.type !== 'trends'), trendsWindow]);
-    setNextZIndex(prev => prev + 1);
-    // Auto-focus the trends window after a brief delay
-    setTimeout(() => bringToFront('trends'), 50);
+      size: { width: 500, height: 450 }
+    });
   }
 
   function handleViewEntry(entryId: string, title: string) {
     playSound('click');
     const windowId = `view-${entryId}`;
-    const viewWindow = {
+    openWindow({
       id: windowId,
       type: 'view' as const,
       title: `View: ${title}`,
       component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(windowId)} />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 700, height: 600 },
-      zIndex: nextZIndex,
       entryId
-    };
-    setWindows(prev => [...prev.filter(w => w.entryId !== entryId), viewWindow]);
-    setNextZIndex(prev => prev + 1);
-    // Auto-focus the view window after a brief delay
-    setTimeout(() => bringToFront(windowId), 50);
+    });
   }
 
   function handleSaveEntry() {
@@ -208,13 +181,23 @@ export default function Journal() {
     setWindows(prev => prev.filter(w => w.id !== windowId));
   }
 
+  // Brings any window to front
   function bringToFront(windowId: string) {
     setWindows(prev => prev.map(w => 
       w.id === windowId 
-        ? { ...w, zIndex: nextZIndex }
+        ? { ...w, zIndex: nextZIndex + 1 }
         : w
     ));
     setNextZIndex(prev => prev + 1);
+  }
+
+  // Create or replace window and put it on top immediately
+  function openWindow(win: any) {
+    setWindows(prev => {
+      const base = prev.filter(w => w.id !== win.id);
+      return [...base, { ...win, zIndex: nextZIndex + 1 }];
+    });
+    setNextZIndex(z => z + 1);
   }
 
   function updateWindowPosition(windowId: string, position: { x: number; y: number }) {
