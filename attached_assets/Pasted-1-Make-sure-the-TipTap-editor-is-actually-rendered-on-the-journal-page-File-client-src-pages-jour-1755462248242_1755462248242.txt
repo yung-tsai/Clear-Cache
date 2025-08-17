@@ -1,0 +1,109 @@
+1) Make sure the TipTap editor is actually rendered on the journal page
+
+File: client/src/pages/journal.tsx
+
+import RetroJournalEditor, { RetroJournalEditorHandle } from "@/components/RetroJournalEditor";
+
+const editorRef = useRef<RetroJournalEditorHandle>(null);
+
+<div className="flex-1 min-h-0 mb-4">
+  <RetroJournalEditor
+    ref={editorRef}
+    value={content}
+    onChange={setContent}
+    placeholder="Start writing your journal entry..."
+  />
+</div>
+
+
+If there’s still a Lexical editor in this spot, swap it out (keep it behind a ternary if you want a 1-line rollback).
+
+2) Bubble menu CSS + render target (fixes “doesn’t show when I highlight”)
+
+File: client/src/components/RetroJournalEditor.tsx
+At the very top:
+
+import 'tippy.js/dist/tippy.css'; // if this import errors, run: npm i tippy.js
+
+
+Update the BubbleMenu props to render above everything and avoid clipping:
+
+<BubbleMenu
+  editor={editor}
+  tippyOptions={{
+    duration: 120,
+    placement: "top",
+    appendTo: () => document.body,  // <— crucial: escape overflow/stacking contexts
+  }}
+>
+  {/* bubble content... */}
+</BubbleMenu>
+
+3) Restore bullets/numbers and ensure editor text isn’t “white on white”
+
+File: client/src/index.css
+Append these rules (they override any global reset like ul,ol { list-style:none }):
+
+/* Editor text is black unless you override --mac-black */
+.retro-editor-shell .editor-surface .ProseMirror {
+  color: var(--mac-black, #000);
+}
+
+/* Force list markers back on (inside editor only) */
+.retro-editor-shell .editor-surface ul {
+  list-style: disc outside !important;
+  padding-left: 18px !important;
+  margin: 0;
+}
+.retro-editor-shell .editor-surface ol {
+  list-style: decimal outside !important;
+  padding-left: 22px !important;
+  margin: 0;
+}
+.retro-editor-shell .editor-surface li { line-height: 1.4; }
+
+/* Make sure bubble menu sits above your windows */
+.tippy-box { z-index: 99999 !important; }
+
+/* Remove native “triangle” resizers; you still have custom handles */
+textarea, .retro-editor-shell, .retro-editor-shell .editor-surface { resize: none !important; }
+.retro-editor-shell::-webkit-resizer,
+.retro-editor-shell .editor-surface::-webkit-resizer,
+textarea::-webkit-resizer { display: none !important; }
+
+4) Confirm the emotion popover exists in the editor
+
+In RetroJournalEditor.tsx, the bubble content should include the 🙂 Tag button with the popover. If it’s missing, use this block:
+
+<div className="emo-wrap">
+  <button
+    className={editor.isActive("emotion") ? "active" : ""}
+    onMouseDown={(e) => e.preventDefault()}
+    onClick={() => setShowEmo((s) => !s)}
+    title="Tag emotion"
+  >
+    🙂 Tag
+  </button>
+  {showEmo && (
+    <div className="emo-pop" onMouseDown={(e) => e.preventDefault()}>
+      <button onClick={() => editor.chain().focus().setEmotion("angry").run()}>😠 Angry</button>
+      <button onClick={() => editor.chain().focus().setEmotion("sad").run()}>😢 Sad</button>
+      <button onClick={() => editor.chain().focus().setEmotion("anxious").run()}>😰 Anxious</button>
+      <button onClick={() => editor.chain().focus().setEmotion("relieved").run()}>😌 Relieved</button>
+      <button className="clear" onClick={() => editor.chain().focus().unsetEmotion().run()}>Clear</button>
+    </div>
+  )}
+</div>
+
+
+And make sure the Emotion mark is registered in the extensions array (you already have this in my earlier file).
+
+5) Quick sanity checks (after the changes)
+
+Select some text → bubble shows → B/I/U work → click 🙂 Tag → choose an emotion → text gets highlighted.
+
+Type - + Space → bullet list appears (with visible markers); Enter continues; Backspace on empty removes a level.
+
+Ordered list: 1. + Space shows numbers.
+
+Bubble menu is no longer hidden behind windows.

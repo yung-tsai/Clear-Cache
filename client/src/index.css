@@ -671,6 +671,48 @@ textarea::-webkit-resizer {
   border: 1px inset #999;
 }
 
+.retro-toolbar .heading-select {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 2px 4px;
+  border: 1px solid #999;
+  background: #e0e0e0;
+}
+
+.retro-toolbar .emotion-controls {
+  position: relative;
+}
+
+.retro-toolbar .emotion-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #fff;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 1000;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.retro-toolbar .emotion-popup button {
+  text-align: left;
+  font-size: 11px;
+  padding: 2px 4px;
+  white-space: nowrap;
+}
+
+.retro-toolbar .emotion-popup .clear-emotion {
+  color: #666;
+  border-top: 1px solid #ddd;
+  margin-top: 2px;
+  padding-top: 4px;
+}
+
 .retro-toolbar .separator {
   width: 1px;
   height: 16px;
@@ -722,6 +764,47 @@ textarea::-webkit-resizer {
 [data-emotion="sad"]     { background: #e6eeff; outline: 1px solid #9ab3ff; }
 [data-emotion="anxious"] { background: #fff3d6; outline: 1px solid #ffcc66; }
 [data-emotion="relieved"]{ background: #e7ffe9; outline: 1px solid #88d69b; }
+
+/* Editor text is black unless you override --mac-black */
+.retro-editor-shell .editor-surface .ProseMirror {
+  color: var(--mac-black, #000);
+}
+
+/* Force list markers back on (inside editor only) */
+.retro-editor-shell .editor-surface ul {
+  list-style: disc outside !important;
+  padding-left: 18px !important;
+  margin: 0;
+}
+.retro-editor-shell .editor-surface ol {
+  list-style: decimal outside !important;
+  padding-left: 22px !important;
+  margin: 0;
+}
+.retro-editor-shell .editor-surface li { line-height: 1.4; }
+
+/* Make sure bubble menu sits above your windows */
+.tippy-box { z-index: 99999 !important; }
+
+/* Bubble menu */
+.retro-editor-shell .bubble {
+  display:flex; align-items:center; gap:6px; background:#f7f7f7; border:1px solid #999;
+  padding:6px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,.2);
+  font-family: ChicagoFLF, Geneva, Arial, sans-serif; font-size:12px;
+}
+.retro-editor-shell .bubble button, .retro-editor-shell .bubble select { font-size:12px; cursor:pointer; }
+.retro-editor-shell .bubble button { padding:2px 6px; border:1px solid #777; background:#eaeaea; }
+.retro-editor-shell .bubble button.active { background:#d0d0d0; }
+.retro-editor-shell .bubble .sep { width:1px; height:16px; background:#bbb; margin:0 4px; }
+
+/* Emotion popover */
+.retro-editor-shell .emo-wrap { position:relative; }
+.retro-editor-shell .emo-pop {
+  position:absolute; top:28px; left:0; display:flex; flex-direction:column; gap:4px;
+  border:1px solid #999; background:#fff; padding:6px; border-radius:6px; width:130px; z-index:10;
+}
+.retro-editor-shell .emo-pop button { text-align:left; }
+.retro-editor-shell .emo-pop .clear { color:#444; }
 
 /* Kill native corner resize glyphs; keep custom window handles */
 .retro-editor-shell, 

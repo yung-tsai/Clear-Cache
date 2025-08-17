@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle } from "react";
+import React, { forwardRef, useImperativeHandle, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -52,11 +52,15 @@ const UnderlineShortcuts = Extension.create({
 
 const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 ({ value = "<p></p>", onChange, placeholder = "Start writing your journal…", className }, ref) => {
+  const [showEmoPopup, setShowEmoPopup] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         bulletList: { keepMarks: true },
         orderedList: { keepMarks: true },
+        // Remove heading from StarterKit to avoid duplicates
+        heading: false,
       }),
       Underline,
       UnderlineShortcuts,
@@ -77,9 +81,19 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 
   if (!editor) return null;
 
+  const addEmotionTag = (type: string) => {
+    editor.chain().focus().setMark("emotion", { type }).run();
+    setShowEmoPopup(false);
+  };
+
+  const removeEmotionTag = () => {
+    editor.chain().focus().unsetMark("emotion").run();
+    setShowEmoPopup(false);
+  };
+
   return (
     <div className={`retro-editor-shell ${className ?? ""}`}>
-      {/* Simple toolbar */}
+      {/* Enhanced toolbar with emotion tagging */}
       <div className="retro-toolbar">
         <button 
           className={editor.isActive("bold") ? "active" : ""} 
@@ -106,10 +120,63 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
         <button 
           className={editor.isActive("bulletList") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleBulletList().run()}
-          title="Bullet List"
+          title="Bullet List (- + space)"
         >
           •
         </button>
+        <button 
+          className={editor.isActive("orderedList") ? "active" : ""} 
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          title="Numbered List (1. + space)"
+        >
+          1.
+        </button>
+        <div className="separator" />
+        
+        {/* Heading dropdown */}
+        <select 
+          className="heading-select" 
+          value={
+            editor.isActive("heading", { level: 1 }) ? "1" :
+            editor.isActive("heading", { level: 2 }) ? "2" :
+            editor.isActive("heading", { level: 3 }) ? "3" : "p"
+          }
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value === "p") {
+              editor.chain().focus().setParagraph().run();
+            } else {
+              editor.chain().focus().setHeading({ level: Number(value) as 1|2|3 }).run();
+            }
+          }}
+        >
+          <option value="p">Normal</option>
+          <option value="1">H1</option>
+          <option value="2">H2</option>
+          <option value="3">H3</option>
+        </select>
+
+        <div className="separator" />
+        
+        {/* Emotion tagging */}
+        <div className="emotion-controls">
+          <button 
+            className={editor.isActive("emotion") ? "active" : ""} 
+            onClick={() => setShowEmoPopup(!showEmoPopup)}
+            title="Tag emotions in your text"
+          >
+            🙂 Tag
+          </button>
+          {showEmoPopup && (
+            <div className="emotion-popup">
+              <button onClick={() => addEmotionTag("angry")}>😠 Angry</button>
+              <button onClick={() => addEmotionTag("sad")}>😢 Sad</button>
+              <button onClick={() => addEmotionTag("anxious")}>😰 Anxious</button>
+              <button onClick={() => addEmotionTag("relieved")}>😌 Relieved</button>
+              <button onClick={removeEmotionTag} className="clear-emotion">Clear</button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="editor-surface">
