@@ -10,26 +10,24 @@ import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
 import { Mic, MicOff, Save, X, Calendar, Clock, Trash2, Edit2, Heart } from "lucide-react";
 
-// Extract emotion tags from saved HTML
+// Extract tags from saved HTML (both new [data-tag] and old [data-emotion])
 function extractReleaseItemsFromHtml(html: string) {
-  const doc = new DOMParser().parseFromString(html || '', 'text/html');
-  const nodes = Array.from(doc.querySelectorAll('[data-emotion]')) as HTMLElement[];
+  const out: Array<{ id: string; text: string; stressLevel: 'tag'; createdAt: string }> = [];
+  if (!html) return out;
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const nodes = Array.from(doc.querySelectorAll('[data-tag], [data-emotion]')) as HTMLElement[];
   const now = new Date().toISOString();
-  return nodes
-    .map((el, idx) => {
-      const text = el.textContent?.trim() || '';
-      const emotion = el.getAttribute('data-emotion') || '';
-      if (!text || !emotion) return null;
-      return {
-        id: `release-${Date.now()}-${idx}`,
-        text,
-        stressLevel: emotion as 'angry' | 'sad' | 'anxious' | 'relieved',
-        createdAt: now,
-      };
-    })
-    .filter(Boolean) as Array<{
-      id: string; text: string; stressLevel: 'angry' | 'sad' | 'anxious' | 'relieved'; createdAt: string;
-    }>;
+  nodes.forEach((el, idx) => {
+    const text = (el.textContent || '').trim();
+    if (!text) return;
+    out.push({
+      id: `release-${Date.now()}-${idx}`,
+      text,
+      stressLevel: 'tag',
+      createdAt: now,
+    });
+  });
+  return out;
 }
 
 interface JournalEntryProps {
@@ -99,7 +97,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
         setCurrentEntryId(newEntry.id);
       }
 
-      // Extract emotion tags and open Release window if any
+      // Extract tags and open Release window if any
       const releaseItems = extractReleaseItemsFromHtml(content);
       if (releaseItems.length > 0 && onOpenReleaseWindow) {
         onOpenReleaseWindow(newEntry?.id ?? currentEntryId!, releaseItems);
@@ -132,7 +130,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
       setSaveStatus("Entry Updated!");
       setTimeout(() => setSaveStatus(""), 2000);
 
-      // Extract emotion tags and open Release window if any
+      // Extract tags and open Release window if any
       const releaseItems = extractReleaseItemsFromHtml(content);
       if (releaseItems.length > 0 && onOpenReleaseWindow) {
         onOpenReleaseWindow(currentEntryId!, releaseItems);
@@ -321,16 +319,16 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
     e.preventDefault();
     playSound('click');
 
-    // Extract emotion tags from current content
+    // Extract tags from current content
     const releaseItems = extractReleaseItemsFromHtml(content);
 
     const entryData: InsertJournalEntry = {
       title,
-      content,
+      content, // full HTML with <span data-tag>
       tags: [],
       mood,
       journalDate,
-      catharsis: releaseItems, // Use extracted emotion tags as release items
+      catharsis: releaseItems, // store for Release
     };
 
     if (currentEntryId) {

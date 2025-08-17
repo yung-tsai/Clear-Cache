@@ -10,7 +10,7 @@ import DesktopClock from "@/components/DesktopClock";
 import RetroJournalEditor, { RetroJournalEditorHandle } from "@/components/RetroJournalEditor";
 
 import TrashIcon from "@/components/TrashIcon";
-import CatharsisFolder from "@/components/CatharsisFolder";
+import ReleaseFolder from "@/components/ReleaseFolder";
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 
@@ -76,7 +76,7 @@ export default function Journal() {
     onSearchEntries: handleSearchEntries
   });
 
-  function openReleaseWindow(entryId: string, items: any[]) {
+  function openReleaseWindow(entryId: string, items?: any[]) {
     const id = `release-${entryId}`;
     const z = takeTop();
     setWindows(prev => [
@@ -295,7 +295,7 @@ export default function Journal() {
           data-testid="trash-icon"
         />
         
-        <CatharsisFolder onPlaySound={(soundName) => playSound(soundName as any)} />
+        <ReleaseFolder onOpenRelease={openReleaseWindow} />
       </div>
     </div>
   );

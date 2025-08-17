@@ -1101,6 +1101,30 @@ textarea::-webkit-resizer {
   line-height: 12px;
 }
 
+/* Tag (red highlight) — applies in editor & viewer */
+[data-tag], [data-emotion] {
+  background: #ffe5e5;
+  outline: 1px solid #d22;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+/* Hover delete popover for tags */
+.tag-popover { 
+  background:#fff; 
+  border:1px solid #999; 
+  border-radius:6px; 
+  padding:4px 6px; 
+  box-shadow:0 2px 6px rgba(0,0,0,.2); 
+}
+.tag-popover-btn { 
+  font-size:12px; 
+  border:1px solid #777; 
+  background:#eee; 
+  cursor:pointer; 
+  padding:2px 6px; 
+}
+
 /* Catharsis Styles */
 .catharsis-window {
   position: fixed;

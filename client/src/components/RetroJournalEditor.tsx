@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useState, useEffect } from "react";
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -20,31 +20,38 @@ type Props = {
   className?: string;
 };
 
-/* Inline emotion mark: <span data-emotion="angry|sad|anxious|relieved">…</span> */
-const Emotion = Mark.create({
-  name: "emotion",
-  addAttributes() {
-    return {
-      type: {
-        default: null,
-        renderHTML: (attrs: any) => ({ "data-emotion": attrs.type || null }),
-        parseHTML: (el: HTMLElement) => el.getAttribute("data-emotion"),
-      },
-    };
-  },
+/** Single generic tag mark -> <span data-tag="1">…</span> */
+const TagMark = Mark.create({
+  name: "tag",
+  inclusive: true,
+  group: "inline",
+  inline: true,
+  spanning: true,
   parseHTML() { 
-    return [{ tag: "span[data-emotion]" }]; 
+    return [{ tag: 'span[data-tag]' }, { tag: 'span[data-emotion]' }]; 
   },
-  renderHTML({ HTMLAttributes }) { 
-    return ["span", mergeAttributes(HTMLAttributes), 0]; 
+  renderHTML({ HTMLAttributes }) {
+    // Normalize old data-emotion into data-tag on render
+    const attrs = { ...HTMLAttributes };
+    if (!attrs['data-tag']) attrs['data-tag'] = '1';
+    delete (attrs as any)['data-emotion'];
+    return ['span', mergeAttributes(attrs), 0];
   },
 });
 
-/* Removed UnderlineShortcuts to fix duplicate extension warning */
+/** Ctrl/Cmd+U shortcut for underline */
+const UnderlineShortcuts = Extension.create({
+  name: "underlineShortcuts",
+  addKeyboardShortcuts() {
+    return { "Mod-u": () => this.editor.commands.toggleUnderline() };
+  },
+});
 
 const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 ({ value = "<p></p>", onChange, placeholder = "Start writing your journal…", className }, ref) => {
-  const [showEmoPopup, setShowEmoPopup] = useState(false);
+  const [showTagPopup, setShowTagPopup] = useState(false);
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
+  const [hoverEl, setHoverEl] = useState<HTMLElement | null>(null);
 
   const editor = useEditor({
     extensions: [
@@ -64,7 +71,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
       }),
       Heading.configure({ levels: [1, 2, 3] }),
       Placeholder.configure({ placeholder }),
-      Emotion,
+      TagMark,
     ],
     content: value?.trim() ? value : "<p></p>",
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
@@ -84,21 +91,64 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
     getHTML: () => editor?.getHTML() ?? "",
   }), [editor]);
 
+  // Hover delete functionality for tagged spans
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom as HTMLElement;
+
+    const onOver = (ev: MouseEvent) => {
+      const t = ev.target as HTMLElement;
+      const el = t?.closest?.('span[data-tag], span[data-emotion]') as HTMLElement | null;
+      if (el) {
+        setHoverEl(el);
+        setHoverRect(el.getBoundingClientRect());
+      } else {
+        setHoverEl(null);
+        setHoverRect(null);
+      }
+    };
+    
+    const onScroll = () => {
+      if (hoverEl) setHoverRect(hoverEl.getBoundingClientRect());
+    };
+
+    dom.addEventListener('mousemove', onOver);
+    window.addEventListener('scroll', onScroll, true);
+    return () => {
+      dom.removeEventListener('mousemove', onOver);
+      window.removeEventListener('scroll', onScroll, true);
+    };
+  }, [editor, hoverEl]);
+
+  const addTag = () => {
+    if (!editor) return;
+    editor.chain().focus().setMark("tag", { 'data-tag': '1' }).run();
+    setShowTagPopup(false);
+  };
+
+  const removeTag = () => {
+    if (!editor) return;
+    editor.chain().focus().unsetMark("tag").run();
+    setShowTagPopup(false);
+  };
+
+  const removeThisTag = () => {
+    if (!editor || !hoverEl) return;
+    const view = editor.view;
+    try {
+      const from = view.posAtDOM(hoverEl, 0);
+      const to = view.posAtDOM(hoverEl, hoverEl.childNodes.length);
+      editor.chain().setTextSelection({ from, to }).unsetMark('tag').run();
+      setHoverEl(null);
+      setHoverRect(null);
+    } catch { /* ignore */ }
+  };
+
   if (!editor) return null;
-
-  const addEmotionTag = (type: string) => {
-    editor.chain().focus().setMark("emotion", { type }).run();
-    setShowEmoPopup(false);
-  };
-
-  const removeEmotionTag = () => {
-    editor.chain().focus().unsetMark("emotion").run();
-    setShowEmoPopup(false);
-  };
 
   return (
     <div className={`retro-editor-shell ${className ?? ""}`}>
-      {/* Enhanced toolbar with emotion tagging */}
+      {/* Enhanced toolbar with tag functionality */}
       <div className="retro-toolbar">
         <button 
           className={editor.isActive("bold") ? "active" : ""} 
@@ -163,26 +213,39 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 
         <div className="separator" />
         
-        {/* Emotion tagging */}
+        {/* Tag controls */}
         <div className="emotion-controls">
           <button 
-            className={editor.isActive("emotion") ? "active" : ""} 
-            onClick={() => setShowEmoPopup(!showEmoPopup)}
-            title="Tag emotions in your text"
+            className={editor.isActive("tag") ? "active" : ""} 
+            onClick={() => setShowTagPopup(!showTagPopup)}
+            title="Tag selected text"
           >
-            🙂 Tag
+            🏷️ Tag
           </button>
-          {showEmoPopup && (
+          {showTagPopup && (
             <div className="emotion-popup" onClick={(e) => e.stopPropagation()}>
-              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("angry"); }}>😠 Angry</button>
-              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("sad"); }}>😢 Sad</button>
-              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("anxious"); }}>😰 Anxious</button>
-              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("relieved"); }}>😌 Relieved</button>
-              <button onClick={(e) => { e.stopPropagation(); removeEmotionTag(); }} className="clear-emotion">Clear</button>
+              <button onClick={(e) => { e.stopPropagation(); addTag(); }}>Add Tag</button>
+              <button onClick={(e) => { e.stopPropagation(); removeTag(); }} className="clear-emotion">Remove Tag</button>
             </div>
           )}
         </div>
       </div>
+
+      {/* Hover delete popover */}
+      {hoverRect && (
+        <div
+          className="tag-popover"
+          style={{
+            position: 'fixed',
+            top: Math.max(8, hoverRect.top - 28),
+            left: hoverRect.left,
+            zIndex: 99999,
+          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+        >
+          <button type="button" className="tag-popover-btn" onClick={removeThisTag} title="Remove tag">🗑️ Remove</button>
+        </div>
+      )}
 
       <div className="editor-surface">
         <EditorContent editor={editor} />
