@@ -3,7 +3,7 @@ import MacWindow from "./MacWindow";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 
-function countTags(html: string) {
+function countCaptures(html: string) {
   if (!html) return 0;
   const doc = new DOMParser().parseFromString(html, 'text/html');
   return doc.querySelectorAll('[data-tag], [data-emotion]').length;
@@ -77,7 +77,7 @@ export default function ReleaseFolder({ onOpenRelease }: ReleaseFolderProps) {
 
   const entries = Array.isArray(data) ? data : [];
   const rows = entries
-    .map((e: any) => ({ id: e.id, title: e.title || '(untitled)', count: countTags(e.content || '') }))
+    .map((e: any) => ({ id: e.id, title: e.title || '(untitled)', count: countCaptures(e.content || '') }))
     .filter(r => r.count > 0)
     .sort((a, b) => b.count - a.count);
 
@@ -133,7 +133,7 @@ export default function ReleaseFolder({ onOpenRelease }: ReleaseFolderProps) {
             {isLoading ? (
               <div>Loading…</div>
             ) : rows.length === 0 ? (
-              <div>No tagged text found.</div>
+              <div>No captured text found.</div>
             ) : (
               <ul className="space-y-1">
                 {rows.map(r => (
@@ -146,7 +146,7 @@ export default function ReleaseFolder({ onOpenRelease }: ReleaseFolderProps) {
                       }}
                       style={{ fontFamily: 'ChicagoFLF, Geneva, Arial, sans-serif', fontSize: '9px' }}
                     >
-                      {r.title} ({r.count} tagged)
+                      {r.title} ({r.count} captured)
                     </button>
                   </li>
                 ))}
