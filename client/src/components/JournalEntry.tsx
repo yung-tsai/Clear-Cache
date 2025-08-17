@@ -10,14 +10,37 @@ import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
 import { Mic, MicOff, Save, X, Calendar, Clock, Trash2, Edit2, Heart } from "lucide-react";
 
+// Extract emotion tags from saved HTML
+function extractReleaseItemsFromHtml(html: string) {
+  const doc = new DOMParser().parseFromString(html || '', 'text/html');
+  const nodes = Array.from(doc.querySelectorAll('[data-emotion]')) as HTMLElement[];
+  const now = new Date().toISOString();
+  return nodes
+    .map((el, idx) => {
+      const text = el.textContent?.trim() || '';
+      const emotion = el.getAttribute('data-emotion') || '';
+      if (!text || !emotion) return null;
+      return {
+        id: `release-${Date.now()}-${idx}`,
+        text,
+        stressLevel: emotion as 'angry' | 'sad' | 'anxious' | 'relieved',
+        createdAt: now,
+      };
+    })
+    .filter(Boolean) as Array<{
+      id: string; text: string; stressLevel: 'angry' | 'sad' | 'anxious' | 'relieved'; createdAt: string;
+    }>;
+}
+
 interface JournalEntryProps {
   entryId?: string;
   readOnly?: boolean;
   onSave?: () => void;
   onClose?: () => void;
+  onOpenReleaseWindow?: (entryId: string, items: any[]) => void;
 }
 
-export default function JournalEntry({ entryId, readOnly, onSave, onClose }: JournalEntryProps) {
+export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpenReleaseWindow }: JournalEntryProps) {
   // Track the current entry ID (either passed in or created)
   const [currentEntryId, setCurrentEntryId] = useState<string | undefined>(entryId);
   const [title, setTitle] = useState("");
@@ -49,7 +72,23 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       return response.json();
     },
     onSuccess: (newEntry) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
+      // Improved query invalidation to catch all journal-entry queries
+      queryClient.invalidateQueries({
+        predicate: q =>
+          Array.isArray(q.queryKey) &&
+          String(q.queryKey[0]).startsWith('/api/journal-entries'),
+      });
+
+      // Optimistic cache merge for main list
+      queryClient.setQueryData(['/api/journal-entries'], (old: any) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          const exists = old.some((e: any) => e.id === newEntry.id);
+          return exists ? old : [newEntry, ...old];
+        }
+        return old;
+      });
+
       playSound('success');
       setSaveStatus("Entry Saved!");
       setTimeout(() => setSaveStatus(""), 2000);
@@ -57,6 +96,12 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       // Update the current entry ID so subsequent saves will update instead of create
       if (newEntry?.id) {
         setCurrentEntryId(newEntry.id);
+      }
+
+      // Extract emotion tags and open Release window if any
+      const releaseItems = extractReleaseItemsFromHtml(content);
+      if (releaseItems.length > 0 && onOpenReleaseWindow) {
+        onOpenReleaseWindow(newEntry?.id ?? currentEntryId!, releaseItems);
       }
       
       onSave?.();
@@ -75,10 +120,23 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
+      // Improved query invalidation to catch all journal-entry queries
+      queryClient.invalidateQueries({
+        predicate: q =>
+          Array.isArray(q.queryKey) &&
+          String(q.queryKey[0]).startsWith('/api/journal-entries'),
+      });
+
       playSound('success');
       setSaveStatus("Entry Updated!");
       setTimeout(() => setSaveStatus(""), 2000);
+
+      // Extract emotion tags and open Release window if any
+      const releaseItems = extractReleaseItemsFromHtml(content);
+      if (releaseItems.length > 0 && onOpenReleaseWindow) {
+        onOpenReleaseWindow(currentEntryId!, releaseItems);
+      }
+
       onSave?.();
       // Auto-close window after saving
       setTimeout(() => onClose?.(), 1000);
@@ -261,13 +319,16 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
     e.preventDefault();
     playSound('click');
 
+    // Extract emotion tags from current content
+    const releaseItems = extractReleaseItemsFromHtml(content);
+
     const entryData: InsertJournalEntry = {
       title,
       content,
       tags: [],
       mood,
       journalDate,
-      catharsis: catharsisItems
+      catharsis: releaseItems, // Use extracted emotion tags as release items
     };
 
     if (currentEntryId) {
@@ -370,17 +431,17 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
             </select>
           </div>
           
-          {/* Catharsis Button */}
-          {!readOnly && (
+          {/* Catharsis Button - REMOVED as requested */}
+          {false && !readOnly && (
             <button
               type="button"
               className="mac-button catharsis-btn"
               onClick={() => setShowCatharsisWindow(true)}
-              title="Open Catharsis Window"
+              title="Open Release Window"
               data-testid="button-catharsis"
             >
               <Heart size={14} />
-              Catharsis ({catharsisItems.length})
+              Release ({catharsisItems.length})
             </button>
           )}
         </div>

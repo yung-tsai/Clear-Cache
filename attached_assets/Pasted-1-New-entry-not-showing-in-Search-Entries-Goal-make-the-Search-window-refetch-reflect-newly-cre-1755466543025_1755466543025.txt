@@ -1,0 +1,245 @@
+1) New entry not showing in “Search Entries”
+
+Goal: make the Search window refetch/reflect newly created/updated entries.
+
+A) Make invalidation catch all journal-entry queries
+
+File: client/src/pages/journal.tsx (where your create/update mutations live)
+
+Replace each invalidateQueries call with a predicate so it also matches keys like ['/api/journal-entries', { q: '...' }], pages, etc.
+
+// after create or update success:
+queryClient.invalidateQueries({
+  predicate: q =>
+    Array.isArray(q.queryKey) &&
+    String(q.queryKey[0]).startsWith('/api/journal-entries'),
+});
+
+
+Optionally, do a small optimistic cache merge for any “plain list” cache:
+
+// inside createMutation.onSuccess(newEntry)
+queryClient.setQueryData(['/api/journal-entries'], (old: any) => {
+  if (!old) return old;
+  // If old is paginated shape {items:[], ...}, adjust accordingly
+  if (Array.isArray(old)) {
+    const exists = old.some((e: any) => e.id === newEntry.id);
+    return exists ? old : [newEntry, ...old];
+  }
+  return old;
+});
+
+B) Make Search entries refetch by default
+
+File (likely): client/src/components/SearchEntries.tsx (or wherever the list is rendered)
+
+Ensure your query has no artificial staleTime and isn’t enabled: false. Example:
+
+const { data, isLoading } = useQuery({
+  queryKey: ['/api/journal-entries', { q, page }],
+  queryFn: () => apiRequest('GET', `/api/journal-entries?q=${encodeURIComponent(q)}&page=${page}`).then(r => r.json()),
+  staleTime: 0,            // ensure it refetches after invalidation
+  refetchOnWindowFocus: true,
+});
+
+2) Pipe emotion tags to a “Release” window after Save (and rename UI)
+
+Goal: when user hits Save Entry, if the editor content has emotion tags, open a Release window and pass those items. Also rename the UI from “Catharsis” → “Release”, but keep the DB field (catharsis) so you don’t need backend changes.
+
+A) Extract emotion tags from saved HTML
+
+File: client/src/pages/journal.tsx
+
+Add this helper near the top:
+
+function extractReleaseItemsFromHtml(html: string) {
+  const doc = new DOMParser().parseFromString(html || '', 'text/html');
+  const nodes = Array.from(doc.querySelectorAll('[data-emotion]')) as HTMLElement[];
+  const now = new Date().toISOString();
+  return nodes
+    .map((el, idx) => {
+      const text = el.textContent?.trim() || '';
+      const emotion = el.getAttribute('data-emotion') || '';
+      if (!text || !emotion) return null;
+      return {
+        id: `release-${Date.now()}-${idx}`,
+        text,
+        stressLevel: emotion as 'angry' | 'sad' | 'anxious' | 'relieved',
+        createdAt: now,
+      };
+    })
+    .filter(Boolean) as Array<{
+      id: string; text: string; stressLevel: 'angry' | 'sad' | 'anxious' | 'relieved'; createdAt: string;
+    }>;
+}
+
+B) Include these items when saving and branch to “Release”
+
+In your handleSubmit (same file), before building entryData:
+
+const releaseItems = extractReleaseItemsFromHtml(content);
+
+
+Build the payload (keep the field name catharsis for compatibility):
+
+const entryData: InsertJournalEntry = {
+  title,
+  content,
+  tags: tags.split(',').map(t => t.trim()).filter(Boolean),
+  mood,
+  journalDate,
+  catharsis: releaseItems,   // <-- same backend field, new semantics
+};
+
+
+Then, in both createMutation.onSuccess and updateMutation.onSuccess, after the existing invalidate calls:
+
+if (releaseItems.length > 0) {
+  // open Release window with items and entryId (re-using your window manager)
+  openReleaseWindow(newEntry?.id ?? currentEntryId!, releaseItems);
+} else {
+  // no tags: just keep in "Release" folder silently (UI wording change only)
+}
+
+
+Add this helper somewhere in journal.tsx where you open windows:
+
+function openReleaseWindow(entryId: string, items: any[]) {
+  const id = `release-${entryId}`;
+  const z = typeof allocZ === 'function' ? allocZ() : 2000;
+  setWindows(prev => [
+    ...prev.filter(w => w.id !== id),
+    {
+      id,
+      type: 'release' as const,
+      title: 'Release',        // rename window title
+      position: { x: 120, y: 90 },
+      size: { width: 680, height: 520 },
+      zIndex: z,
+      entryId,
+      payload: { items },      // pass emotion-tagged spans
+    },
+  ]);
+}
+
+
+You can keep your existing CatharsisWindow component but rename its title prop and accept payload.items; or create an alias component ReleaseWindow that wraps the same UI.
+
+C) Rename visible strings from “Catharsis” → “Release”
+
+In New Entry and View Entry windows, remove the Catharsis button entirely (see §3 below).
+
+Wherever you render the left sidebar/folder list, change the label from Catharsis to Release. Do not change server field names.
+
+3) Remove “Catharsis” button in New Entry & View Entry
+
+File: client/src/pages/journal.tsx (or the component that renders the footer buttons)
+
+Delete or guard this block:
+
+{/* Catharsis Button — REMOVE */}
+{false && !readOnly && (
+  <button
+    type="button"
+    className="mac-button catharsis-btn"
+    onClick={() => setShowCatharsisWindow(true)}
+    title="Open Catharsis Window"
+    data-testid="button-catharsis"
+  >
+    Catharsis ({catharsisItems.length})
+  </button>
+)}
+
+
+If catharsisItems state is unused after this, you can remove it—but if you still display tags in the Release window, keep the state (renamed if you want) or rely on extractReleaseItemsFromHtml(content) whenever needed.
+
+4) Sound On/Off toggle doesn’t mute
+
+Goal: centralize the sound toggle so every playSound() respects it.
+
+A) Add a tiny sound settings provider
+
+Create: client/src/hooks/useSoundSettings.tsx
+
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+type Ctx = { enabled: boolean; setEnabled: (v: boolean) => void; toggle: () => void; };
+const SoundSettingsContext = createContext<Ctx | null>(null);
+
+export function SoundSettingsProvider({ children }: { children: React.ReactNode }) {
+  const [enabled, setEnabled] = useState<boolean>(() => {
+    const raw = localStorage.getItem('soundEnabled');
+    return raw ? raw === 'true' : true;
+  });
+  useEffect(() => { localStorage.setItem('soundEnabled', String(enabled)); }, [enabled]);
+  const toggle = () => setEnabled(v => !v);
+  return (
+    <SoundSettingsContext.Provider value={{ enabled, setEnabled, toggle }}>
+      {children}
+    </SoundSettingsContext.Provider>
+  );
+}
+
+export function useSoundSettings() {
+  const ctx = useContext(SoundSettingsContext);
+  if (!ctx) throw new Error('useSoundSettings must be used within SoundSettingsProvider');
+  return ctx;
+}
+
+
+Wrap your app once (root layout) with the provider:
+
+File: client/src/main.tsx or client/src/App.tsx (whichever mounts the app)
+
+import { SoundSettingsProvider } from '@/hooks/useSoundSettings';
+
+root.render(
+  <SoundSettingsProvider>
+    <App />
+  </SoundSettingsProvider>
+);
+
+B) Make useMacSounds honor the switch
+
+File: client/src/hooks/useMacSounds.ts
+
+Add:
+
+import { useSoundSettings } from '@/hooks/useSoundSettings';
+
+
+Then inside the hook:
+
+export function useMacSounds() {
+  const { enabled } = useSoundSettings();
+  // ... existing sound setup
+
+  function playSound(name: 'type'|'click'|'success'|'trash'|'windowClose' /* add others */) {
+    if (!enabled) return;           // <-- hard stop when muted
+    // existing logic to play the audio buffer / HTMLAudioElement
+  }
+
+  return { playSound };
+}
+
+
+Now all existing calls like playSound('type') automatically respect the toggle.
+Wire your “Sound On/Off” UI to useSoundSettings():
+
+const { enabled, toggle } = useSoundSettings();
+<button onClick={toggle}>{enabled ? 'Sound: On' : 'Sound: Off'}</button>
+
+
+No changes needed elsewhere.
+
+Quick verification checklist
+
+Save a new entry → open Search Entries → it appears without reload.
+
+Tag some text with 🙂 in the editor → Save → Release window opens with those tagged snippets; if no tags, no Release window.
+
+No “Catharsis” button present in New or View entry windows.
+
+Flip Sound Off → no key clicks / success sounds anywhere; flip On → sounds return.
+
+If you hit a specific file/location that doesn’t match these paths, paste the path + the 10–15 lines around it and I’ll tailor the snippet exactly to your code.

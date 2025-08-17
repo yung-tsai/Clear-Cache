@@ -59,7 +59,7 @@ export default function Journal() {
   const takeTop = () => ++zTopRef.current;
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const [currentBackground, setCurrentBackground] = useState('classic');
-  const { playSound, soundEnabled, toggleSound } = useMacSounds();
+  const { playSound } = useMacSounds();
 
   // Play startup sound when app loads
   useEffect(() => {
@@ -76,6 +76,24 @@ export default function Journal() {
     onSearchEntries: handleSearchEntries
   });
 
+  function openReleaseWindow(entryId: string, items: any[]) {
+    const id = `release-${entryId}`;
+    const z = takeTop();
+    setWindows(prev => [
+      ...prev.filter(w => w.id !== id),
+      {
+        id,
+        type: 'release' as any,
+        title: 'Release',
+        component: <div className="p-4"><h3>Release Items Found!</h3><pre>{JSON.stringify(items, null, 2)}</pre></div>,
+        position: { x: 120, y: 90 },
+        size: { width: 680, height: 520 },
+        zIndex: z,
+        entryId,
+      } as any,
+    ]);
+  }
+
   function handleNewEntry() {
     playSound('windowOpen');
     const windowId = `entry-${crypto.randomUUID()}`;
@@ -83,7 +101,11 @@ export default function Journal() {
       id: windowId,
       type: 'entry' as const,
       title: 'New Journal Entry',
-      component: <JournalEntry onSave={handleSaveEntry} onClose={() => closeWindow(windowId)} />,
+      component: <JournalEntry 
+        onSave={handleSaveEntry} 
+        onClose={() => closeWindow(windowId)}
+        onOpenReleaseWindow={openReleaseWindow}
+      />,
       position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
       size: getStoredSize('entry', { width: 700, height: 600 })
     });
@@ -162,7 +184,12 @@ export default function Journal() {
       id: windowId,
       type: 'view' as const,
       title: `View: ${title}`,
-      component: <JournalEntry entryId={entryId} readOnly={false} onClose={() => closeWindow(windowId)} />,
+      component: <JournalEntry 
+        entryId={entryId} 
+        readOnly={false} 
+        onClose={() => closeWindow(windowId)}
+        onOpenReleaseWindow={openReleaseWindow}
+      />,
       position: { x: 120 + Math.random() * 250, y: 120 + Math.random() * 150 },
       size: { width: 700, height: 600 },
       entryId
@@ -235,8 +262,7 @@ export default function Journal() {
         onSearchEntries={handleSearchEntries}
         onShowGratitudePrompts={handleShowGratitudePrompts}
         onShowMoodTrends={handleShowMoodTrends}
-        soundEnabled={soundEnabled}
-        onToggleSound={toggleSound}
+
         onChangeBackground={setCurrentBackground}
         currentBackground={currentBackground}
       />

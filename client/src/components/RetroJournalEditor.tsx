@@ -59,8 +59,11 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
       StarterKit.configure({
         bulletList: { keepMarks: true },
         orderedList: { keepMarks: true },
-        // Remove heading from StarterKit to avoid duplicates
+        // Remove heading and other extensions to avoid duplicates
         heading: false,
+        bold: true,
+        italic: true,
+        // StarterKit doesn't include underline, so no conflict
       }),
       Underline,
       UnderlineShortcuts,

@@ -38,7 +38,12 @@ export default function SearchWindow({ onViewEntry, onDragStart }: SearchWindowP
       await apiRequest('DELETE', `/api/journal-entries/${entryId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/journal-entries'] });
+      // Improved query invalidation to catch all journal-entry queries
+      queryClient.invalidateQueries({
+        predicate: q =>
+          Array.isArray(q.queryKey) &&
+          String(q.queryKey[0]).startsWith('/api/journal-entries'),
+      });
     }
   });
 

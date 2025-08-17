@@ -1,12 +1,13 @@
-import { useState, useCallback } from "react";
+import { useCallback } from "react";
+import { useSoundSettings } from "./useSoundSettings";
 
 type SoundType = 'click' | 'type' | 'startup' | 'disk' | 'error' | 'beep' | 'windowOpen' | 'windowClose' | 'trash' | 'menuDrop' | 'alert' | 'success';
 
 export function useMacSounds() {
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { enabled } = useSoundSettings();
 
   const playSound = useCallback((type: SoundType) => {
-    if (!soundEnabled) return;
+    if (!enabled) return;
 
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -233,15 +234,9 @@ export function useMacSounds() {
       // Silently fail if Web Audio API is not available
       console.warn('Web Audio API not available');
     }
-  }, [soundEnabled]);
-
-  const toggleSound = useCallback(() => {
-    setSoundEnabled(prev => !prev);
-  }, []);
+  }, [enabled]);
 
   return {
-    soundEnabled,
-    playSound,
-    toggleSound
+    playSound
   };
 }

@@ -1,13 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useMacSounds } from "@/hooks/useMacSounds";
+import { useSoundSettings } from "@/hooks/useSoundSettings";
 
 interface MenuBarProps {
   onNewEntry: () => void;
   onSearchEntries: () => void;
   onShowGratitudePrompts: () => void;
   onShowMoodTrends: () => void;
-  soundEnabled: boolean;
-  onToggleSound: () => void;
   onChangeBackground: (background: string) => void;
   currentBackground: string;
 }
@@ -17,8 +16,6 @@ export default function MenuBar({
   onSearchEntries, 
   onShowGratitudePrompts,
   onShowMoodTrends,
-  soundEnabled, 
-  onToggleSound,
   onChangeBackground,
   currentBackground
 }: MenuBarProps) {
@@ -27,6 +24,7 @@ export default function MenuBar({
   const viewMenuRef = useRef<HTMLDivElement>(null);
   const specialMenuRef = useRef<HTMLDivElement>(null);
   const { playSound } = useMacSounds();
+  const { enabled, toggle } = useSoundSettings();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -177,11 +175,11 @@ export default function MenuBar({
       
       <div 
         className="sound-toggle"
-        onClick={onToggleSound}
+        onClick={toggle}
         data-testid="button-toggle-sound"
       >
-        <span>{soundEnabled ? '🔊' : '🔇'}</span>
-        <span>Sound {soundEnabled ? 'ON' : 'OFF'}</span>
+        <span>{enabled ? '🔊' : '🔇'}</span>
+        <span>Sound {enabled ? 'ON' : 'OFF'}</span>
       </div>
     </div>
   );
