@@ -151,6 +151,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
       {/* Enhanced toolbar with tag functionality */}
       <div className="retro-toolbar">
         <button 
+          type="button"
           className={editor.isActive("bold") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleBold().run()}
           title="Bold (Ctrl/Cmd+B)"
@@ -158,6 +159,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
           B
         </button>
         <button 
+          type="button"
           className={editor.isActive("italic") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleItalic().run()}
           title="Italic (Ctrl/Cmd+I)"
@@ -165,6 +167,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
           I
         </button>
         <button 
+          type="button"
           className={editor.isActive("underline") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           title="Underline (Ctrl/Cmd+U)"
@@ -173,6 +176,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
         </button>
         <div className="separator" />
         <button 
+          type="button"
           className={editor.isActive("bulletList") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           title="Bullet List (- + space)"
@@ -180,6 +184,7 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
           •
         </button>
         <button 
+          type="button"
           className={editor.isActive("orderedList") ? "active" : ""} 
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           title="Numbered List (1. + space)"
@@ -216,16 +221,17 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
         {/* Capture controls */}
         <div className="emotion-controls">
           <button 
+            type="button"
             className={editor.isActive("tag") ? "active" : ""} 
-            onClick={() => setShowTagPopup(!showTagPopup)}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowTagPopup(!showTagPopup); }}
             title="Capture selected text"
           >
             📝 Capture
           </button>
           {showTagPopup && (
             <div className="emotion-popup" onClick={(e) => e.stopPropagation()}>
-              <button onClick={(e) => { e.stopPropagation(); addTag(); }}>Capture</button>
-              <button onClick={(e) => { e.stopPropagation(); removeTag(); }} className="clear-emotion">Delete</button>
+              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); addTag(); setShowTagPopup(false); }}>Capture</button>
+              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeTag(); setShowTagPopup(false); }} className="clear-emotion">Delete</button>
             </div>
           )}
         </div>
