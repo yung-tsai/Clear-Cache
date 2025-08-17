@@ -62,7 +62,8 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
   // Fetch existing entry if entryId is provided
   const { data: entry, isLoading } = useQuery<JournalEntryType>({
     queryKey: ['/api/journal-entries', currentEntryId],
-    enabled: !!currentEntryId
+    enabled: !!currentEntryId,
+    refetchOnMount: true
   });
 
   // Create mutation
@@ -145,16 +146,17 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
 
   useEffect(() => {
     if (entry) {
-      setTitle(entry.title);
-      setContent(entry.content);
+      console.log('Loading entry data:', entry); // Debug log
+      setTitle(entry.title || "");
+      setContent(entry.content || "");
       setMood(entry.mood || null);
-      setJournalDate(entry.journalDate);
+      setJournalDate(entry.journalDate || new Date().toISOString().split('T')[0]);
       setCatharsisItems(entry.catharsis || []);
-    } else {
-      // For new entries, set today's date
+    } else if (!currentEntryId) {
+      // For new entries, set default date
       setJournalDate(new Date().toISOString().split('T')[0]);
     }
-  }, [entry]);
+  }, [entry, currentEntryId]);
 
 
 
@@ -374,7 +376,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
         {true ? (
           <RetroJournalEditor
             ref={editorRef}
-            value={content}
+            value={content || "<p></p>"}
             onChange={setContent}
             placeholder="Start writing your journal entry..."
           />

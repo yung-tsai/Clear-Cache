@@ -1,4 +1,4 @@
-import React, { forwardRef, useImperativeHandle, useState } from "react";
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -40,15 +40,7 @@ const Emotion = Mark.create({
   },
 });
 
-/* Add Mod-U shortcut for underline */
-const UnderlineShortcuts = Extension.create({
-  name: "underlineShortcuts",
-  addKeyboardShortcuts() {
-    return { 
-      "Mod-u": () => this.editor.commands.toggleUnderline() 
-    };
-  },
-});
+/* Removed UnderlineShortcuts to fix duplicate extension warning */
 
 const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
 ({ value = "<p></p>", onChange, placeholder = "Start writing your journal…", className }, ref) => {
@@ -59,14 +51,17 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
       StarterKit.configure({
         bulletList: { keepMarks: true },
         orderedList: { keepMarks: true },
-        // Remove heading and other extensions to avoid duplicates
         heading: false,
         bold: true,
         italic: true,
-        // StarterKit doesn't include underline, so no conflict
       }),
-      Underline,
-      UnderlineShortcuts,
+      Underline.extend({
+        addKeyboardShortcuts() {
+          return {
+            'Mod-u': () => this.editor.commands.toggleUnderline(),
+          }
+        }
+      }),
       Heading.configure({ levels: [1, 2, 3] }),
       Placeholder.configure({ placeholder }),
       Emotion,
@@ -74,6 +69,13 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
     content: value?.trim() ? value : "<p></p>",
     onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
   });
+
+  // Update content when value prop changes
+  useEffect(() => {
+    if (editor && value !== editor.getHTML()) {
+      editor.commands.setContent(value?.trim() ? value : "<p></p>", false);
+    }
+  }, [editor, value]);
 
   useImperativeHandle(ref, () => ({
     focus: () => { editor?.commands.focus(); },
@@ -171,12 +173,12 @@ const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
             🙂 Tag
           </button>
           {showEmoPopup && (
-            <div className="emotion-popup">
-              <button onClick={() => addEmotionTag("angry")}>😠 Angry</button>
-              <button onClick={() => addEmotionTag("sad")}>😢 Sad</button>
-              <button onClick={() => addEmotionTag("anxious")}>😰 Anxious</button>
-              <button onClick={() => addEmotionTag("relieved")}>😌 Relieved</button>
-              <button onClick={removeEmotionTag} className="clear-emotion">Clear</button>
+            <div className="emotion-popup" onClick={(e) => e.stopPropagation()}>
+              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("angry"); }}>😠 Angry</button>
+              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("sad"); }}>😢 Sad</button>
+              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("anxious"); }}>😰 Anxious</button>
+              <button onClick={(e) => { e.stopPropagation(); addEmotionTag("relieved"); }}>😌 Relieved</button>
+              <button onClick={(e) => { e.stopPropagation(); removeEmotionTag(); }} className="clear-emotion">Clear</button>
             </div>
           )}
         </div>
