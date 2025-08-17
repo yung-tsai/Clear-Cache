@@ -7,6 +7,7 @@ import GratitudePrompts from "@/components/GratitudePrompts";
 import MoodTrendsWindow from "@/components/MoodTrendsWindow";
 import DesktopWeatherWidget from "@/components/DesktopWeatherWidget";
 import DesktopClock from "@/components/DesktopClock";
+import RetroJournalEditor, { RetroJournalEditorHandle } from "@/components/RetroJournalEditor";
 
 import TrashIcon from "@/components/TrashIcon";
 import CatharsisFolder from "@/components/CatharsisFolder";

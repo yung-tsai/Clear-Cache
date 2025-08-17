@@ -631,6 +631,109 @@ textarea::-webkit-resizer {
   display: none !important;
 }
 
+/* Retro TipTap editor (scoped) */
+.retro-editor-shell { 
+  display: flex; 
+  flex-direction: column; 
+  width: 100%; 
+  height: 100%; 
+  background: #fff; 
+  border: 2px outset #c0c0c0; 
+}
+
+.retro-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #c0c0c0;
+  font-family: "ChicagoFLF", Geneva, Arial, sans-serif;
+  font-size: 12px;
+}
+
+.retro-toolbar button {
+  padding: 2px 6px;
+  border: 1px solid #999;
+  background: #e0e0e0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.retro-toolbar button:hover {
+  background: #d0d0d0;
+}
+
+.retro-toolbar button.active {
+  background: #b0b0b0;
+  border: 1px inset #999;
+}
+
+.retro-toolbar .separator {
+  width: 1px;
+  height: 16px;
+  background: #999;
+  margin: 0 4px;
+}
+
+.retro-editor-shell .editor-surface { 
+  flex: 1; 
+  min-height: 180px; 
+}
+
+.retro-editor-shell .editor-surface .ProseMirror {
+  outline: none; 
+  padding: 8px; 
+  width: 100%; 
+  max-width: 100%; 
+  box-sizing: border-box;
+  font-family: ChicagoFLF, Geneva, Arial, sans-serif; 
+  font-size: 12px; 
+  line-height: 1.4;
+  min-height: 160px;
+}
+
+/* Headings + lists */
+.retro-editor-shell .editor-surface h1,
+.retro-editor-shell .editor-surface h2,
+.retro-editor-shell .editor-surface h3 { 
+  margin: 0; 
+  font-weight: 700; 
+}
+
+.retro-editor-shell .editor-surface h1 { font-size: 16px; }
+.retro-editor-shell .editor-surface h2 { font-size: 14px; }
+.retro-editor-shell .editor-surface h3 { font-size: 13px; }
+
+.retro-editor-shell .editor-surface ul,
+.retro-editor-shell .editor-surface ol { 
+  margin: 0 0 0 18px; 
+}
+
+/* Emotion highlights (editor + viewer) */
+[data-emotion] { 
+  padding: 0 1px; 
+  border-radius: 2px; 
+}
+
+[data-emotion="angry"]   { background: #ffe5e5; outline: 1px solid #ff8a8a; }
+[data-emotion="sad"]     { background: #e6eeff; outline: 1px solid #9ab3ff; }
+[data-emotion="anxious"] { background: #fff3d6; outline: 1px solid #ffcc66; }
+[data-emotion="relieved"]{ background: #e7ffe9; outline: 1px solid #88d69b; }
+
+/* Kill native corner resize glyphs; keep custom window handles */
+.retro-editor-shell, 
+.retro-editor-shell .editor-surface { 
+  resize: none !important; 
+}
+
+.retro-editor-shell::-webkit-resizer,
+.retro-editor-shell .editor-surface::-webkit-resizer {
+  display: none !important; 
+}
+
 .desktop {
   margin-top: 22px;
   height: calc(100vh - 22px);

@@ -1,0 +1,271 @@
+1) Install TipTap (client only)
+cd client
+npm i @tiptap/react @tiptap/starter-kit \
+      @tiptap/extension-underline @tiptap/extension-heading \
+      @tiptap/extension-placeholder
+
+2) Add the new editor component
+
+Create: client/src/components/RetroJournalEditor.tsx
+
+import React, { forwardRef, useImperativeHandle, useState } from "react";
+import { EditorContent, useEditor, BubbleMenu } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Underline from "@tiptap/extension-underline";
+import Heading from "@tiptap/extension-heading";
+import Placeholder from "@tiptap/extension-placeholder";
+import { Mark, mergeAttributes, Extension } from "@tiptap/core";
+
+export type RetroJournalEditorHandle = {
+  focus: () => void;
+  insertParagraph: () => void;
+  insertText: (text: string) => void;
+  getHTML: () => string;
+};
+
+type Props = {
+  value?: string;
+  onChange?: (html: string) => void;
+  placeholder?: string;
+  className?: string;
+};
+
+/* Inline emotion mark: <span data-emotion="angry|sad|anxious|relieved">…</span> */
+const Emotion = Mark.create({
+  name: "emotion",
+  inclusive: true,
+  group: "inline",
+  inline: true,
+  spanning: true,
+  addAttributes() {
+    return {
+      type: {
+        default: null,
+        renderHTML: (attrs: any) => ({ "data-emotion": attrs.type || null }),
+        parseHTML: (el: HTMLElement) => el.getAttribute("data-emotion"),
+      },
+    };
+  },
+  parseHTML() { return [{ tag: "span[data-emotion]" }]; },
+  renderHTML({ HTMLAttributes }) { return ["span", mergeAttributes(HTMLAttributes), 0]; },
+  addCommands() {
+    return {
+      setEmotion:
+        (type: string) =>
+        ({ chain }) =>
+          chain().setMark(this.name, { type }).run(),
+      unsetEmotion:
+        () =>
+        ({ chain }) =>
+          chain().unsetMark(this.name).run(),
+    };
+  },
+});
+
+/* Add Mod-U shortcut for underline */
+const UnderlineShortcuts = Extension.create({
+  name: "underlineShortcuts",
+  addKeyboardShortcuts() {
+    return { "Mod-u": () => this.editor.commands.toggleUnderline() };
+  },
+});
+
+const RetroJournalEditor = forwardRef<RetroJournalEditorHandle, Props>(
+({ value = "<p></p>", onChange, placeholder = "Start writing your journal…", className }, ref) => {
+  const [showEmo, setShowEmo] = useState(false);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        bulletList: { keepMarks: true },
+        orderedList: { keepMarks: true },
+      }),
+      Underline,
+      UnderlineShortcuts,
+      Heading.configure({ levels: [1, 2, 3] }),
+      Placeholder.configure({ placeholder }),
+      Emotion,
+    ],
+    content: value?.trim() ? value : "<p></p>",
+    onUpdate: ({ editor }) => onChange?.(editor.getHTML()),
+  });
+
+  useImperativeHandle(ref, () => ({
+    focus: () => { editor?.commands.focus(); },
+    insertParagraph: () => { editor?.chain().focus().insertContent("<p></p>").run(); },
+    insertText: (text: string) => { editor?.chain().focus().insertContent(text).run(); },
+    getHTML: () => editor?.getHTML() ?? "",
+  }), [editor]);
+
+  if (!editor) return null;
+
+  const run = (fn: () => boolean) => (e: React.MouseEvent | React.FormEvent) => {
+    e.preventDefault();
+    editor.chain().focus();
+    fn();
+  };
+
+  return (
+    <div className={`retro-editor-shell ${className ?? ""}`}>
+      <BubbleMenu editor={editor} tippyOptions={{ duration: 120, placement: "top" }}>
+        <div className="bubble">
+          <button className={editor.isActive("bold") ? "active" : ""} onMouseDown={(e) => e.preventDefault()} onClick={run(() => editor.chain().toggleBold().run())}>B</button>
+          <button className={editor.isActive("italic") ? "active" : ""} onMouseDown={(e) => e.preventDefault()} onClick={run(() => editor.chain().toggleItalic().run())}>I</button>
+          <button className={editor.isActive("underline") ? "active" : ""} onMouseDown={(e) => e.preventDefault()} onClick={run(() => editor.chain().toggleUnderline().run())}>U</button>
+
+          <div className="sep" />
+          <button className={editor.isActive("bulletList") ? "active" : ""} onMouseDown={(e) => e.preventDefault()} onClick={run(() => editor.chain().toggleBulletList().run())} title='Bullet list (also works with "- " + space)'>••</button>
+          <div className="sep" />
+
+          <select className="h-select" defaultValue="p" onMouseDown={(e) => e.preventDefault()}
+            onChange={(e) => {
+              const v = e.target.value;
+              if (v === "p") editor.chain().focus().setParagraph().run();
+              else editor.chain().focus().setHeading({ level: Number(v) as 1|2|3 }).run();
+              e.currentTarget.value = "p";
+            }}>
+            <option value="p">Normal</option>
+            <option value="1">H1</option>
+            <option value="2">H2</option>
+            <option value="3">H3</option>
+          </select>
+
+          <div className="sep" />
+          <div className="emo-wrap">
+            <button className={editor.isActive("emotion") ? "active" : ""} onMouseDown={(e) => e.preventDefault()} onClick={() => setShowEmo((s) => !s)} title="Tag emotion">🙂 Tag</button>
+            {showEmo && (
+              <div className="emo-pop" onMouseDown={(e) => e.preventDefault()}>
+                <button onClick={run(() => editor.commands.setEmotion("angry"))}>😠 Angry</button>
+                <button onClick={run(() => editor.commands.setEmotion("sad"))}>😢 Sad</button>
+                <button onClick={run(() => editor.commands.setEmotion("anxious"))}>😰 Anxious</button>
+                <button onClick={run(() => editor.commands.setEmotion("relieved"))}>😌 Relieved</button>
+                <button className="clear" onClick={run(() => editor.commands.unsetEmotion())}>Clear</button>
+              </div>
+            )}
+          </div>
+        </div>
+      </BubbleMenu>
+
+      <div className="editor-surface">
+        <EditorContent editor={editor} />
+      </div>
+    </div>
+  );
+});
+
+export default RetroJournalEditor;
+
+3) Add scoped CSS (retro + emotion highlights + responsive + no triangles)
+
+Append to: client/src/index.css
+
+/* Retro TipTap editor (scoped) */
+.retro-editor-shell { display:flex; flex-direction:column; width:100%; height:100%; background:#fff; border:2px outset #c0c0c0; }
+.retro-editor-shell .editor-surface { flex:1; min-height:180px; }
+.retro-editor-shell .editor-surface .ProseMirror {
+  outline:none; padding:8px; width:100%; max-width:100%; box-sizing:border-box;
+  font-family: ChicagoFLF, Geneva, Arial, sans-serif; font-size:12px; line-height:1.4;
+}
+
+/* Headings + lists */
+.retro-editor-shell .editor-surface h1,
+.retro-editor-shell .editor-surface h2,
+.retro-editor-shell .editor-surface h3 { margin:0; font-weight:700; }
+.retro-editor-shell .editor-surface h1 { font-size:16px; }
+.retro-editor-shell .editor-surface h2 { font-size:14px; }
+.retro-editor-shell .editor-surface h3 { font-size:13px; }
+.retro-editor-shell .editor-surface ul,
+.retro-editor-shell .editor-surface ol { margin:0 0 0 18px; }
+
+/* Bubble menu */
+.retro-editor-shell .bubble {
+  display:flex; align-items:center; gap:6px; background:#f7f7f7; border:1px solid #999;
+  padding:6px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,.2);
+  font-family: ChicagoFLF, Geneva, Arial, sans-serif; font-size:12px;
+}
+.retro-editor-shell .bubble button, .retro-editor-shell .bubble select { font-size:12px; cursor:pointer; }
+.retro-editor-shell .bubble button { padding:2px 6px; border:1px solid #777; background:#eaeaea; }
+.retro-editor-shell .bubble button.active { background:#d0d0d0; }
+.retro-editor-shell .bubble .sep { width:1px; height:16px; background:#bbb; margin:0 4px; }
+
+/* Emotion popover */
+.retro-editor-shell .emo-wrap { position:relative; }
+.retro-editor-shell .emo-pop {
+  position:absolute; top:28px; left:0; display:flex; flex-direction:column; gap:4px;
+  border:1px solid #999; background:#fff; padding:6px; border-radius:6px; width:130px; z-index:10;
+}
+.retro-editor-shell .emo-pop button { text-align:left; }
+.retro-editor-shell .emo-pop .clear { color:#444; }
+
+/* Emotion highlights (editor + viewer) */
+[data-emotion] { padding:0 1px; border-radius:2px; }
+[data-emotion="angry"]   { background:#ffe5e5; outline:1px solid #ff8a8a; }
+[data-emotion="sad"]     { background:#e6eeff; outline:1px solid #9ab3ff; }
+[data-emotion="anxious"] { background:#fff3d6; outline:1px solid #ffcc66; }
+[data-emotion="relieved"]{ background:#e7ffe9; outline:1px solid #88d69b; }
+
+/* Kill native corner resize glyphs; keep custom window handles */
+.retro-editor-shell, .retro-editor-shell .editor-surface, textarea { resize:none !important; }
+.retro-editor-shell::-webkit-resizer,
+.retro-editor-shell .editor-surface::-webkit-resizer,
+textarea::-webkit-resizer { display:none !important; }
+
+/* Small screens: scale bubble a bit */
+@media (max-width:520px) {
+  .retro-editor-shell .bubble { transform: scale(0.9); transform-origin: center; }
+}
+
+4) Swap the editor in the journal page (keep Lexical for rollback)
+
+Edit: client/src/pages/journal.tsx
+
+Import and ref type:
+
+import RetroJournalEditor, { RetroJournalEditorHandle } from "@/components/RetroJournalEditor";
+
+
+Change the ref type you use with voice-to-text:
+
+const editorRef = useRef<RetroJournalEditorHandle>(null);
+
+
+Replace just the editor JSX (keep the old one in a ternary for instant rollback):
+
+<div className="flex-1 min-h-0 mb-4">
+  {/* Flip this to false to revert to Lexical instantly */}
+  {true ? (
+    <RetroJournalEditor
+      ref={editorRef}
+      value={content}
+      onChange={setContent}
+      placeholder="Start writing your journal entry..."
+    />
+  ) : (
+    <RichTextEditorLexical
+      value={content}
+      onChange={setContent}
+      placeholder="Start writing your journal entry..."
+      readOnly={readOnly}
+    />
+  )}
+</div>
+
+
+Your existing voice-to-text code can stay the same: it calls
+editorRef.current?.insertParagraph() and editorRef.current?.insertText(text)—both are implemented in the new component.
+
+5) Acceptance checks (what to verify)
+
+Typing “- ” then Space creates a bullet list; Enter continues the list; Backspace on empty item unindents.
+
+Cmd/Ctrl-B/I/U work; selection shows a bubble menu with B/I/U, bullets, H1-H3, and 🙂 Tag.
+
+Choosing an emotion wraps selection with <span data-emotion="…">…</span> and highlights it.
+
+Voice-to-text still inserts text at cursor and new paragraphs.
+
+Saved entries reopen with formatting + emotion highlights.
+
+No native corner triangle resize glyphs in the editor area.
+
+That’s all Replit needs. If anything resists, tell me which file/line and I’ll hand you a tiny patch for that spot.

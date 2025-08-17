@@ -5,6 +5,7 @@ import type { JournalEntry as JournalEntryType, InsertJournalEntry, CatharsisIte
 import { useMacSounds } from "@/hooks/useMacSounds";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import RichTextEditorLexical, { RichTextEditorHandle } from "@/components/RichTextEditorLexical";
+import RetroJournalEditor, { RetroJournalEditorHandle } from "@/components/RetroJournalEditor";
 import MoodSelector from "@/components/MoodSelector";
 import CatharsisWindow from "@/components/CatharsisWindow";
 import { Mic, MicOff, Save, X, Calendar, Clock, Trash2, Edit2, Heart } from "lucide-react";
@@ -101,7 +102,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
   // Voice-to-text functionality using Web Speech API
   const recognitionRef = useRef<any>(null);
-  const editorRef = useRef<RichTextEditorHandle>(null);
+  const editorRef = useRef<RetroJournalEditorHandle>(null);
 
   // Normalize dictation text (turns words into punctuation/newlines)
   function normalizeDictation(input: string): string {
@@ -308,14 +309,24 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose }: Jou
 
       
       <div className="flex-1 min-h-0 mb-4">
-        <RichTextEditorLexical
-          key={currentEntryId ?? "new"}
-          initialHTML={entry?.content ?? ""}
-          onChange={setContent}
-          placeholder="Start writing your journal entry..."
-          readOnly={readOnly}
-          ref={editorRef}
-        />
+        {/* Flip this to false to revert to Lexical instantly */}
+        {true ? (
+          <RetroJournalEditor
+            ref={editorRef}
+            value={content}
+            onChange={setContent}
+            placeholder="Start writing your journal entry..."
+          />
+        ) : (
+          <RichTextEditorLexical
+            key={currentEntryId ?? "new"}
+            initialHTML={entry?.content ?? ""}
+            onChange={setContent}
+            placeholder="Start writing your journal entry..."
+            readOnly={readOnly}
+            ref={editorRef as any}
+          />
+        )}
       </div>
       
       <div className="flex justify-between items-center border-t border-gray-400 pt-2">
