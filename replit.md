@@ -70,3 +70,6 @@ Preferred communication style: Simple, everyday language.
 - **Restored keyboard shortcuts** for bold (Cmd/Ctrl+B), italic (Cmd/Ctrl+I), and underline (Cmd/Ctrl+U)
 - **Improved text readability** by increasing line height from 12px to 14px for better spacing
 - **Enhanced list styling** with visible bullet points and proper indentation for both editor and viewer
+- **Added voice-to-text punctuation normalizer** (August 17, 2025) - converts spoken words like "period", "comma", "new line" into actual punctuation and formatting
+- **Implemented auto-close windows after saving** - windows automatically close 1 second after saving entries to reduce user clicks from two steps to one
+- **Enhanced window z-index management** - new windows automatically appear at the front and gain focus when opened
