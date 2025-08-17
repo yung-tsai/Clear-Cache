@@ -1,98 +1,71 @@
-import { useRef, useCallback, useState } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 
-interface UseDraggableOptions {
-  onDrag?: (position: { x: number; y: number }) => void;
+type Point = { x: number; y: number };
+type Opts = {
+  onDrag: (p: Point) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
-}
+  /** CSS selector for the element that can start a drag */
+  dragHandleSelector?: string; // default: ".mac-window-title-bar"
+};
 
-export function useDraggable({ onDrag, onDragStart, onDragEnd }: UseDraggableOptions = {}) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStateRef = useRef({
-    isDragging: false,
-    startX: 0,
-    startY: 0,
-    startLeft: 0,
-    startTop: 0
-  });
+export function useDraggable({
+  onDrag,
+  onDragStart,
+  onDragEnd,
+  dragHandleSelector = ".mac-window-title-bar",
+}: Opts) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setDragging] = useState(false);
+  const offset = useRef({ x: 0, y: 0 });
 
-  const handleMouseDown = useCallback((e: MouseEvent) => {
-    if (!ref.current) return;
-    
-    const titleBar = ref.current.querySelector('.mac-window-title-bar');
-    if (!titleBar || !titleBar.contains(e.target as Node)) return;
-    
-    e.preventDefault();
-    setIsDragging(true);
-    onDragStart?.();
-    
-    const rect = ref.current.getBoundingClientRect();
-    dragStateRef.current = {
-      isDragging: true,
-      startX: e.clientX,
-      startY: e.clientY,
-      startLeft: rect.left,
-      startTop: rect.top
+  const handleMouseDown = useCallback(
+    (e: MouseEvent) => {
+      const node = ref.current;
+      if (!node) return;
+
+      // start only when the mousedown happens on/inside the handle
+      const target = e.target as HTMLElement;
+      if (dragHandleSelector && !target.closest(dragHandleSelector)) return;
+
+      const rect = node.getBoundingClientRect();
+      offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+      setDragging(true);
+      onDragStart?.();
+      e.preventDefault();
+    },
+    [dragHandleSelector, onDragStart]
+  );
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    node.addEventListener("mousedown", handleMouseDown);
+    return () => node.removeEventListener("mousedown", handleMouseDown);
+  }, [handleMouseDown]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const move = (e: MouseEvent) => {
+      onDrag({
+        x: e.clientX - offset.current.x,
+        y: e.clientY - offset.current.y,
+      });
     };
-  }, [onDragStart]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!dragStateRef.current.isDragging || !ref.current) return;
-    
-    const deltaX = e.clientX - dragStateRef.current.startX;
-    const deltaY = e.clientY - dragStateRef.current.startY;
-    
-    const newLeft = Math.max(0, Math.min(
-      dragStateRef.current.startLeft + deltaX,
-      window.innerWidth - ref.current.offsetWidth
-    ));
-    
-    const newTop = Math.max(20, Math.min(
-      dragStateRef.current.startTop + deltaY,
-      window.innerHeight - ref.current.offsetHeight
-    ));
-    
-    onDrag?.({ x: newLeft, y: newTop });
-  }, [onDrag]);
-
-  const handleMouseUp = useCallback(() => {
-    if (dragStateRef.current.isDragging) {
-      setIsDragging(false);
-      dragStateRef.current.isDragging = false;
+    const up = () => {
+      setDragging(false);
       onDragEnd?.();
-    }
-  }, [onDragEnd]);
-
-  // Attach event listeners
-  const attachListeners = useCallback((element: HTMLDivElement) => {
-    element.addEventListener('mousedown', handleMouseDown as EventListener);
-    
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    
-    return () => {
-      element.removeEventListener('mousedown', handleMouseDown as EventListener);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [handleMouseDown, handleMouseMove, handleMouseUp]);
 
-  const setRef = useCallback((element: HTMLDivElement | null) => {
-    if (ref.current) {
-      // Clean up previous listeners
-      ref.current.removeEventListener('mousedown', handleMouseDown as EventListener);
-    }
-    
-    (ref as any).current = element;
-    
-    if (element) {
-      attachListeners(element);
-    }
-  }, [attachListeners, handleMouseDown]);
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+    return () => {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+    };
+  }, [isDragging, onDrag, onDragEnd]);
 
-  return {
-    ref: setRef,
-    isDragging
-  };
+  return { ref, isDragging };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import MenuBar from "@/components/MenuBar";
 import MacWindow from "@/components/MacWindow";
 import JournalEntry from "@/components/JournalEntry";
@@ -54,7 +54,8 @@ export default function Journal() {
   };
 
   // start high to avoid colliding with other app layers
-  const [nextZIndex, setNextZIndex] = useState(1000);
+  const zTopRef = useRef(1000);
+  const takeTop = () => ++zTopRef.current;
   const [draggedEntry, setDraggedEntry] = useState<string | null>(null);
   const [currentBackground, setCurrentBackground] = useState('classic');
   const { playSound, soundEnabled, toggleSound } = useMacSounds();
@@ -183,21 +184,21 @@ export default function Journal() {
 
   // Brings any window to front
   function bringToFront(windowId: string) {
+    const top = takeTop();
     setWindows(prev => prev.map(w => 
       w.id === windowId 
-        ? { ...w, zIndex: nextZIndex + 1 }
+        ? { ...w, zIndex: top }
         : w
     ));
-    setNextZIndex(prev => prev + 1);
   }
 
   // Create or replace window and put it on top immediately
   function openWindow(win: any) {
+    const top = takeTop();
     setWindows(prev => {
       const base = prev.filter(w => w.id !== win.id);
-      return [...base, { ...win, zIndex: nextZIndex + 1 }];
+      return [...base, { ...win, zIndex: top }];
     });
-    setNextZIndex(z => z + 1);
   }
 
   function updateWindowPosition(windowId: string, position: { x: number; y: number }) {

@@ -34,7 +34,8 @@ export default function MacWindow({
     onDragStart: () => {
       onFocus();
       playSound('click');
-    }
+    },
+    dragHandleSelector: ".mac-window-title-bar",
   });
 
   const handleMouseDown = () => {

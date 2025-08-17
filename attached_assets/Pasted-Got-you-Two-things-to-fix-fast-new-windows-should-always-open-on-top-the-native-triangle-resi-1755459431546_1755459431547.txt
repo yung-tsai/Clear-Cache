@@ -1,0 +1,214 @@
+Got you. Two things to fix, fast:
+
+new windows should always open on top
+
+the native “triangle” resize grippers should be gone (keep your custom resize)
+
+Below is a drop-in patch you can hand to Replit. It includes: a z-index manager that can’t be out-raced by React updates, a drag hook that removes the “gap” when you start dragging (uses pointer offset), and CSS that disables the browser’s native resizer while keeping your custom handles.
+
+1) useDraggable — fix the “gap” + drag only from title bar
+
+client/src/hooks/useDraggable.ts
+
+import { useRef, useState, useEffect, useCallback } from "react";
+
+type Point = { x: number; y: number };
+type Opts = {
+  onDrag: (p: Point) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  /** CSS selector for the element that can start a drag */
+  dragHandleSelector?: string; // default: ".mac-window-title-bar"
+};
+
+export function useDraggable({
+  onDrag,
+  onDragStart,
+  onDragEnd,
+  dragHandleSelector = ".mac-window-title-bar",
+}: Opts) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [isDragging, setDragging] = useState(false);
+  const offset = useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = useCallback(
+    (e: MouseEvent) => {
+      const node = ref.current;
+      if (!node) return;
+
+      // start only when the mousedown happens on/inside the handle
+      const target = e.target as HTMLElement;
+      if (dragHandleSelector && !target.closest(dragHandleSelector)) return;
+
+      const rect = node.getBoundingClientRect();
+      offset.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+
+      setDragging(true);
+      onDragStart?.();
+      e.preventDefault();
+    },
+    [dragHandleSelector, onDragStart]
+  );
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    node.addEventListener("mousedown", handleMouseDown);
+    return () => node.removeEventListener("mousedown", handleMouseDown);
+  }, [handleMouseDown]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const move = (e: MouseEvent) => {
+      onDrag({
+        x: e.clientX - offset.current.x,
+        y: e.clientY - offset.current.y,
+      });
+    };
+    const up = () => {
+      setDragging(false);
+      onDragEnd?.();
+    };
+
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+    return () => {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+    };
+  }, [isDragging, onDrag, onDragEnd]);
+
+  return { ref, isDragging };
+}
+
+2) MacWindow — use the new drag handle + no CSS z-index jump
+
+client/src/components/MacWindow.tsx
+
+Use the handle selector so you can only drag from the title bar.
+
+Don’t bump z-index in CSS while dragging (state should control it).
+
+const { ref, isDragging } = useDraggable({
+  onDrag: onPositionChange,
+  onDragStart: () => {
+    onFocus();
+    playSound("click");
+  },
+  dragHandleSelector: ".mac-window-title-bar",
+});
+
+
+(leave the rest as-is)
+
+3) Window manager — deterministic topmost z-index
+
+client/src/pages/journal.tsx (or wherever you create/manage windows)
+
+Add a ref counter so z-index updates are synchronous and cannot be “beaten” by setState timing:
+
+const zTopRef = useRef(1000); // start higher than anything static
+const takeTop = () => ++zTopRef.current;
+
+function bringToFront(id: string) {
+  const top = takeTop();
+  setWindows(prev => prev.map(w => (w.id === id ? { ...w, zIndex: top } : w)));
+}
+
+// when creating ANY window:
+function openWindow(win: Omit<AppWindow, "zIndex">) {
+  const top = takeTop();
+  setWindows(prev => [...prev, { ...win, zIndex: top }]);
+  // immediate focus, no setTimeout needed
+}
+
+
+Then change every place you spawn a window (New Entry, Search, View Entry, etc.) to call openWindow(...) (or set zIndex: takeTop() inline) and do not rely on a delayed setTimeout. Also make sure each MacWindow calls onFocus={() => bringToFront(window.id)} on onMouseDown (you already do).
+
+Why this works: there’s a single monotonic, synchronous source of truth for z-index. Every new window gets takeTop() before it renders, and any click immediately lifts a window with another takeTop(). No CSS class can override it.
+
+4) CSS — remove native resize triangles, keep custom resize
+
+client/src/index.css
+
+/* --- Window layer ------------------------------------------------------- */
+.mac-window {
+  position: absolute;
+  background: var(--mac-white);
+  border: 2px outset #c0c0c0;
+  box-shadow: 2px 2px 4px rgba(0,0,0,.3);
+  min-width: 300px;
+  min-height: 200px;
+
+  /* IMPORTANT: let state control stacking, not CSS */
+  /* no z-index here; set via style={{ zIndex }} in React */
+
+  /* Disable native browser resizer; we use custom handles */
+  resize: none !important;
+  overflow: hidden; /* content scrolls inside .mac-window-content */
+  cursor: default;  /* we'll put 'move' on the title bar only */
+}
+
+/* remove UA corner grippers (Chromium/WebKit) */
+.mac-window::-webkit-resizer { display: none; }
+
+/* Title bar is the drag handle */
+.mac-window-title-bar {
+  background: #f0f0f0;
+  height: 28px;
+  border-bottom: 1px inset #c0c0c0;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: move;     /* <-- only here */
+}
+
+/* Content scrolls but isn’t resizable by the browser */
+.mac-window-content {
+  padding: 8px;
+  height: calc(100% - 28px);
+  overflow: auto;
+  resize: none !important;
+}
+
+/* Resize handles you already render (stay invisible but active) */
+.mac-window-resize-handle { position: absolute; background: transparent; z-index: 10; }
+/* … (keep your existing handle positions) … */
+
+/* Dragging state: visual only, DO NOT change z-index here */
+.dragging { opacity: 0.85; }  /* delete any z-index from this rule */
+
+
+If you still see triangles on corners: search your CSS for resize: (sometimes it’s set on .mac-window or .mac-window-content). Every element with resize:* can draw a gripper; force resize: none !important; on those classes.
+
+5) (Optional) keep windows inside the viewport (nice UX)
+
+Add clamping when you set position in onDrag:
+
+function clampToViewport(x: number, y: number, width: number, height: number) {
+  const maxX = window.innerWidth - width;
+  const maxY = window.innerHeight - height;
+  return { x: Math.max(0, Math.min(x, maxX)), y: Math.max(0, Math.min(y, maxY)) };
+}
+
+
+Use it in your onPositionChange handler before saving state.
+
+Quick test checklist
+
+Open “New Entry” and “Search Entries”: each should render already on top without any extra click.
+
+Click different windows: each click should lift to front instantly.
+
+Start dragging from the title bar: the window should move with no initial snap/gap.
+
+Resize with your custom handles: works; no native triangle grippers anywhere.
+
+If you paste these changes and it’s still misbehaving, the usual culprits are:
+
+a parent element with its own z-index or transform (creates a stacking context) that traps children; or
+
+some CSS rule still setting z-index on .mac-window or .dragging.
+
+Send me your journal.tsx window-spawning code if you want me to mark the exact lines to swap for takeTop() / openWindow().
