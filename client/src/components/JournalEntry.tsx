@@ -67,6 +67,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: InsertJournalEntry) => {
+      console.log('Sending create data:', data); // Debug log
       const response = await apiRequest('POST', '/api/journal-entries', data);
       return response.json();
     },
@@ -115,6 +116,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
       if (!currentEntryId) {
         throw new Error('No entry ID found for update');
       }
+      console.log('Sending update data:', data); // Debug log
       const response = await apiRequest('PATCH', `/api/journal-entries/${currentEntryId}`, data);
       return response.json();
     },
@@ -328,7 +330,7 @@ export default function JournalEntry({ entryId, readOnly, onSave, onClose, onOpe
       tags: [],
       mood,
       journalDate,
-      catharsis: releaseItems, // store for Release
+      catharsis: [], // Keep empty for now since we store tagged content in the HTML itself
     };
 
     if (currentEntryId) {
