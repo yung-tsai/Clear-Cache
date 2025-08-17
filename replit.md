@@ -73,3 +73,6 @@ Preferred communication style: Simple, everyday language.
 - **Added voice-to-text punctuation normalizer** (August 17, 2025) - converts spoken words like "period", "comma", "new line" into actual punctuation and formatting
 - **Implemented auto-close windows after saving** - windows automatically close 1 second after saving entries to reduce user clicks from two steps to one
 - **Enhanced window z-index management** - new windows automatically appear at the front and gain focus when opened
+- **Fixed Capture button functionality** (August 17, 2025) - resolved window closing issue by adding proper event handling with preventDefault and type="button" to all toolbar buttons
+- **Corrected save validation errors** - fixed catharsis field structure to match schema requirements, ensuring successful entry saving
+- **Improved Capture workflow** - users can now properly highlight text, click Capture to tag with red highlighting, continue writing, and save without window closing prematurely
